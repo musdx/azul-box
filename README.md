@@ -15,3 +15,7 @@ To download dependencies in archlinux
 ```
 sudo pacman -S ffmpeg yt-dlp python-mutagen
 ```
+
+## Images
+
+<img src="./assets/download.png" width="350"></img>
