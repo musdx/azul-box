@@ -2,7 +2,7 @@
 mod dl;
 
 use dirs;
-use dl::b_music;
+use dl::{b_music, b_video};
 use eframe::egui;
 use native_dialog::DialogBuilder;
 use tokio;
@@ -31,7 +31,7 @@ struct MyApp {
 
 impl Default for MyApp {
     fn default() -> Self {
-        let default_directory = dirs::audio_dir()
+        let default_directory = dirs::download_dir()
             .map(|path| path.to_string_lossy().into_owned())
             .unwrap_or_else(|| String::from(""));
         Self {
@@ -69,39 +69,77 @@ impl eframe::App for MyApp {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
-        egui::Window::new("Music").resizable(false).show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                let link_label = ui.label("Youtube link: ");
-                ui.text_edit_singleline(&mut self.link)
-                    .labelled_by(link_label.id);
+        egui::Window::new("Music-dl")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    let link_label = ui.label("Youtube link: ");
+                    ui.text_edit_singleline(&mut self.link)
+                        .labelled_by(link_label.id);
 
-                let dir_label = ui.label("Directory: ");
-                if ui
-                    .text_edit_singleline(&mut self.directory)
-                    .labelled_by(dir_label.id)
-                    .clicked()
-                {
-                    let path = DialogBuilder::file()
-                        .set_location(&self.directory)
-                        .open_single_dir()
-                        .show()
-                        .unwrap();
+                    let dir_label = ui.label("Directory: ");
+                    if ui
+                        .text_edit_singleline(&mut self.directory)
+                        .labelled_by(dir_label.id)
+                        .clicked()
+                    {
+                        let path = DialogBuilder::file()
+                            .set_location(&self.directory)
+                            .open_single_dir()
+                            .show()
+                            .unwrap();
 
-                    if let Some(p) = path {
-                        self.directory = p.to_string_lossy().into_owned();
-                    } else {
-                        println!("No file selected.");
+                        if let Some(p) = path {
+                            self.directory = p.to_string_lossy().into_owned();
+                        } else {
+                            println!("No file selected.");
+                        }
+                    };
+
+                    if ui.button("Download").clicked() {
+                        let link = self.link.clone();
+                        let directory = self.directory.clone();
+                        tokio::task::spawn(async move {
+                            b_music::download(link, directory).await;
+                        });
                     }
-                };
-
-                if ui.button("Download").clicked() {
-                    let link = self.link.clone();
-                    let directory = self.directory.clone();
-                    tokio::task::spawn(async move {
-                        b_music::download(link, directory).await;
-                    });
-                }
+                });
             });
-        });
+        egui::Window::new("Video-dl")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    let link_label = ui.label("Youtube link: ");
+                    ui.text_edit_singleline(&mut self.link)
+                        .labelled_by(link_label.id);
+
+                    let dir_label = ui.label("Directory: ");
+                    if ui
+                        .text_edit_singleline(&mut self.directory)
+                        .labelled_by(dir_label.id)
+                        .clicked()
+                    {
+                        let path = DialogBuilder::file()
+                            .set_location(&self.directory)
+                            .open_single_dir()
+                            .show()
+                            .unwrap();
+
+                        if let Some(p) = path {
+                            self.directory = p.to_string_lossy().into_owned();
+                        } else {
+                            println!("No file selected.");
+                        }
+                    };
+
+                    if ui.button("Download").clicked() {
+                        let link = self.link.clone();
+                        let directory = self.directory.clone();
+                        tokio::task::spawn(async move {
+                            b_video::download(link, directory).await;
+                        });
+                    }
+                });
+            });
     }
 }
