@@ -4,6 +4,7 @@ mod dl;
 use dirs;
 use dl::b_music;
 use eframe::egui;
+use native_dialog::DialogBuilder;
 use tokio;
 
 #[tokio::main]
@@ -67,7 +68,7 @@ impl eframe::App for MyApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {});
+        egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
         egui::Window::new("Music").resizable(false).show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 let link_label = ui.label("Youtube link: ");
@@ -75,8 +76,23 @@ impl eframe::App for MyApp {
                     .labelled_by(link_label.id);
 
                 let dir_label = ui.label("Directory: ");
-                ui.text_edit_singleline(&mut self.directory)
-                    .labelled_by(dir_label.id);
+                if ui
+                    .text_edit_singleline(&mut self.directory)
+                    .labelled_by(dir_label.id)
+                    .clicked()
+                {
+                    let path = DialogBuilder::file()
+                        .set_location(&self.directory)
+                        .open_single_dir()
+                        .show()
+                        .unwrap();
+
+                    if let Some(p) = path {
+                        self.directory = p.to_string_lossy().into_owned();
+                    } else {
+                        println!("No file selected.");
+                    }
+                };
 
                 if ui.button("Download").clicked() {
                     let link = self.link.clone();
