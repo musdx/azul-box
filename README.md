@@ -1,5 +1,5 @@
 # Azul Box
-<img src="./assets/logo.png" width="500"></img>
+<img src="./assets/logo.png" width="370"></img>
 
 ## Feature
 
@@ -35,4 +35,7 @@ sudo pacman -S ffmpeg yt-dlp python-mutagen
 
 ## Images
 
-<img src="./assets/download.png" width="350"></img>
+<div align="center">
+<img src="./assets/pic2.png" width="350"></img>
+<img src="./assets/pic1.png" width="350"></img>
+</div>
