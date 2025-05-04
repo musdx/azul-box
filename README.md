@@ -1,8 +1,23 @@
-## Feature 
+# Azul Box
+<img src="./assets/logo.png" width="500"></img>
 
-- Download music from youtube with metadata/cover embeded 
+## Feature
+
+- Download music from youtube with metadata/cover embeded
+- Download Video with highest quality with some metadata embeded
 
 This is a software i made to just randomly do something I need so feature will be really random
+
+## Installation
+
+Use this follow command to build then install the app. You will still need to install dependencies.
+
+```
+git clone https://github.com/musdx/azul-box
+cd azul-box
+sudo chmod +x install.sh
+./install.sh
+```
 
 ## Dependencies
 

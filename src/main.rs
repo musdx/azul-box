@@ -26,7 +26,7 @@ async fn main() -> eframe::Result {
 
 struct MyApp {
     link: String,
-    directory: String,
+    out_directory: String,
 }
 
 impl Default for MyApp {
@@ -36,7 +36,7 @@ impl Default for MyApp {
             .unwrap_or_else(|| String::from(""));
         Self {
             link: "".to_string(),
-            directory: default_directory,
+            out_directory: default_directory,
         }
     }
 }
@@ -69,7 +69,9 @@ impl eframe::App for MyApp {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
+        //music
         egui::Window::new("Music-dl")
+            .default_open(false)
             .resizable(false)
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
@@ -79,18 +81,18 @@ impl eframe::App for MyApp {
 
                     let dir_label = ui.label("Directory: ");
                     if ui
-                        .text_edit_singleline(&mut self.directory)
+                        .text_edit_singleline(&mut self.out_directory)
                         .labelled_by(dir_label.id)
                         .clicked()
                     {
                         let path = DialogBuilder::file()
-                            .set_location(&self.directory)
+                            .set_location(&self.out_directory)
                             .open_single_dir()
                             .show()
                             .unwrap();
 
                         if let Some(p) = path {
-                            self.directory = p.to_string_lossy().into_owned();
+                            self.out_directory = p.to_string_lossy().into_owned();
                         } else {
                             println!("No file selected.");
                         }
@@ -98,14 +100,16 @@ impl eframe::App for MyApp {
 
                     if ui.button("Download").clicked() {
                         let link = self.link.clone();
-                        let directory = self.directory.clone();
+                        let directory = self.out_directory.clone();
                         tokio::task::spawn(async move {
                             b_music::download(link, directory).await;
                         });
                     }
                 });
             });
+        //Video
         egui::Window::new("Video-dl")
+            .default_open(false)
             .resizable(false)
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
@@ -115,18 +119,18 @@ impl eframe::App for MyApp {
 
                     let dir_label = ui.label("Directory: ");
                     if ui
-                        .text_edit_singleline(&mut self.directory)
+                        .text_edit_singleline(&mut self.out_directory)
                         .labelled_by(dir_label.id)
                         .clicked()
                     {
                         let path = DialogBuilder::file()
-                            .set_location(&self.directory)
+                            .set_location(&self.out_directory)
                             .open_single_dir()
                             .show()
                             .unwrap();
 
                         if let Some(p) = path {
-                            self.directory = p.to_string_lossy().into_owned();
+                            self.out_directory = p.to_string_lossy().into_owned();
                         } else {
                             println!("No file selected.");
                         }
@@ -134,7 +138,7 @@ impl eframe::App for MyApp {
 
                     if ui.button("Download").clicked() {
                         let link = self.link.clone();
-                        let directory = self.directory.clone();
+                        let directory = self.out_directory.clone();
                         tokio::task::spawn(async move {
                             b_video::download(link, directory).await;
                         });
