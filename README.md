@@ -10,6 +10,8 @@ This is a software i made to just randomly do something I need so feature will b
 
 ## Installation
 
+You will need to have [rustup](https://rustup.rs/) already installed.
+
 Use this follow command to build then install the app. You will still need to install dependencies.
 
 ```
