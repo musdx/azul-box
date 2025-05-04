@@ -1,5 +1,5 @@
 # Azul Box
-<img src="./assets/logo.png" width="370"></img>
+<img src="./assets/logo.png" width="300"></img>
 
 ## Feature
 
