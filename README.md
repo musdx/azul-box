@@ -6,6 +6,8 @@
 - Download music from youtube with metadata/cover embeded
 - Download Video with highest quality with some metadata embeded
 
+It do not just support youtube my software wrap yt-dlp so it will technically support all yt-dlp [support](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
+
 This is a software i made to just randomly do something I need so feature will be really random
 
 ## Installation
