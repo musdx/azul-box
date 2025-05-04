@@ -48,10 +48,15 @@ impl eframe::App for MyApp {
             .text_styles
             .get_mut(&egui::TextStyle::Heading)
             .unwrap()
-            .size = 28.0;
+            .size = 26.0;
         style
             .text_styles
             .get_mut(&egui::TextStyle::Body)
+            .unwrap()
+            .size = 20.0;
+        style
+            .text_styles
+            .get_mut(&egui::TextStyle::Button)
             .unwrap()
             .size = 20.0;
 
@@ -62,7 +67,8 @@ impl eframe::App for MyApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ctx, |ui| {});
+        egui::Window::new("Music").resizable(false).show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 let link_label = ui.label("Youtube link: ");
                 ui.text_edit_singleline(&mut self.link)
@@ -72,7 +78,7 @@ impl eframe::App for MyApp {
                 ui.text_edit_singleline(&mut self.directory)
                     .labelled_by(dir_label.id);
 
-                if ui.button("download").clicked() {
+                if ui.button("Download").clicked() {
                     let link = self.link.clone();
                     let directory = self.directory.clone();
                     tokio::task::spawn(async move {
