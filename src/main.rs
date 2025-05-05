@@ -75,7 +75,7 @@ impl eframe::App for MyApp {
             .resizable(false)
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
-                    let link_label = ui.label("Youtube link: ");
+                    let link_label = ui.label("link: ");
                     ui.text_edit_singleline(&mut self.link)
                         .labelled_by(link_label.id);
 
@@ -113,7 +113,7 @@ impl eframe::App for MyApp {
             .resizable(false)
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
-                    let link_label = ui.label("Youtube link: ");
+                    let link_label = ui.label("link: ");
                     ui.text_edit_singleline(&mut self.link)
                         .labelled_by(link_label.id);
 
