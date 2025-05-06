@@ -3,8 +3,10 @@ mod dl;
 
 use dirs;
 use dl::{b_music, b_video};
-use eframe::egui;
+use eframe::egui::{self, global_theme_preference_buttons};
 use native_dialog::DialogBuilder;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio;
 
 #[tokio::main]
@@ -27,6 +29,18 @@ async fn main() -> eframe::Result {
 struct MyApp {
     link: String,
     out_directory: String,
+    status_complete: Arc<AtomicBool>,
+    status_pending: Arc<AtomicBool>,
+}
+
+impl MyApp {
+    fn reset_download_status(&mut self) {
+        self.status_complete.store(false, Ordering::Relaxed);
+        self.status_pending.store(false, Ordering::Relaxed);
+    }
+    fn start_download_status(&mut self) {
+        self.status_pending.store(true, Ordering::Relaxed);
+    }
 }
 
 impl Default for MyApp {
@@ -37,6 +51,8 @@ impl Default for MyApp {
         Self {
             link: "".to_string(),
             out_directory: default_directory,
+            status_complete: Arc::new(AtomicBool::new(false)),
+            status_pending: Arc::new(AtomicBool::new(false)),
         }
     }
 }
@@ -65,6 +81,7 @@ impl eframe::App for MyApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.vertical_centered_justified(|ui| {
                 ui.heading("Azul Box");
+                global_theme_preference_buttons(ui);
             });
         });
 
@@ -99,11 +116,24 @@ impl eframe::App for MyApp {
                     };
 
                     if ui.button("Download").clicked() {
+                        self.reset_download_status();
+                        self.start_download_status();
+
                         let link = self.link.clone();
                         let directory = self.out_directory.clone();
+                        let complete = self.status_complete.clone();
+                        let doing = self.status_pending.clone();
+
                         tokio::task::spawn(async move {
                             b_music::download(link, directory).await;
+                            complete.store(true, Ordering::Relaxed);
+                            doing.store(false, Ordering::Relaxed);
                         });
+                    }
+                    if self.status_complete.load(Ordering::Relaxed) {
+                        ui.label("Done!");
+                    } else if self.status_pending.load(Ordering::Relaxed) {
+                        ui.spinner();
                     }
                 });
             });
@@ -137,11 +167,24 @@ impl eframe::App for MyApp {
                     };
 
                     if ui.button("Download").clicked() {
+                        self.reset_download_status();
+                        self.start_download_status();
+
                         let link = self.link.clone();
                         let directory = self.out_directory.clone();
+                        let complete = self.status_complete.clone();
+                        let doing = self.status_pending.clone();
+
                         tokio::task::spawn(async move {
                             b_video::download(link, directory).await;
+                            complete.store(true, Ordering::Relaxed);
+                            doing.store(false, Ordering::Relaxed);
                         });
+                    }
+                    if self.status_complete.load(Ordering::Relaxed) {
+                        ui.label("Done!");
+                    } else if self.status_pending.load(Ordering::Relaxed) {
+                        ui.spinner();
                     }
                 });
             });
