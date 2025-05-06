@@ -6,7 +6,7 @@
 - Download music from link with metadata/cover embeded
 - Download Video from link with highest quality with some metadata embeded
 
-My software will technically support all yt-dlp [support](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube
+My software will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube
 
 This is a software i made to just randomly do something I need so feature will be really random
 
