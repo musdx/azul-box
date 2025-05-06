@@ -3,7 +3,7 @@ mod dl;
 
 use dirs;
 use dl::{b_music, b_video};
-use eframe::egui::{self, global_theme_preference_buttons};
+use eframe::egui::{self, Color32, global_theme_preference_buttons};
 use native_dialog::DialogBuilder;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -85,7 +85,19 @@ impl eframe::App for MyApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.with_layout(
+                egui::Layout::top_down_justified(egui::Align::Center),
+                |ui| {
+                    ui.label("Status of your last action: ");
+                    if self.status_complete.load(Ordering::Relaxed) {
+                        ui.colored_label(Color32::GREEN, "Done!");
+                    } else if self.status_pending.load(Ordering::Relaxed) {
+                        ui.spinner();
+                    }
+                },
+            );
+        });
         //music
         egui::Window::new("Music-dl")
             .default_open(false)
@@ -129,11 +141,6 @@ impl eframe::App for MyApp {
                             complete.store(true, Ordering::Relaxed);
                             doing.store(false, Ordering::Relaxed);
                         });
-                    }
-                    if self.status_complete.load(Ordering::Relaxed) {
-                        ui.label("Done!");
-                    } else if self.status_pending.load(Ordering::Relaxed) {
-                        ui.spinner();
                     }
                 });
             });
@@ -180,11 +187,6 @@ impl eframe::App for MyApp {
                             complete.store(true, Ordering::Relaxed);
                             doing.store(false, Ordering::Relaxed);
                         });
-                    }
-                    if self.status_complete.load(Ordering::Relaxed) {
-                        ui.label("Done!");
-                    } else if self.status_pending.load(Ordering::Relaxed) {
-                        ui.spinner();
                     }
                 });
             });
