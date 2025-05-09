@@ -9,6 +9,7 @@ pub struct VideoDownload {
     pub out_directory: String,
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
+    pub format: i8,
 }
 
 impl Default for VideoDownload {
@@ -21,6 +22,7 @@ impl Default for VideoDownload {
             out_directory: default_directory,
             status_complete: Arc::new(AtomicBool::new(false)),
             status_pending: Arc::new(AtomicBool::new(false)),
+            format: 1,
         }
     }
 }
@@ -33,11 +35,28 @@ impl VideoDownload {
     fn start_download_status(&mut self) {
         self.status_pending.store(true, Ordering::Relaxed);
     }
+    fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
+        if self.format == numbername {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new(name).color(Color32::LIGHT_GREEN),
+                ))
+                .clicked()
+            {
+                self.format = numbername;
+            };
+        } else {
+            if ui.button(name).clicked() {
+                self.format = numbername;
+            };
+        }
+    }
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
                 ui.menu_button("Format", |ui| {
-                    ui.label("still empty");
+                    self.format_button(ui, "MKV", 1);
+                    self.format_button(ui, "MP4", 2);
                 });
                 if ui.button("Close").clicked() {
                     ui.close_menu();
@@ -81,11 +100,12 @@ impl VideoDownload {
 
                 let link = self.link.clone();
                 let directory = self.out_directory.clone();
+                let format = self.format.clone();
                 let complete = self.status_complete.clone();
                 let doing = self.status_pending.clone();
 
                 tokio::task::spawn(async move {
-                    download(link, directory).await;
+                    download(link, directory, format).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -94,15 +114,20 @@ impl VideoDownload {
     }
 }
 
-async fn download(link: String, directory: String) {
+async fn download(link: String, directory: String, format: i8) {
+    if format == 1 {
+        mkv_dl(link, directory).await;
+    } else if format == 2 {
+        mp4_dl(link, directory).await;
+    }
+}
+async fn mkv_dl(link: String, directory: String) {
     let output = Command::new("yt-dlp")
         .arg("-f")
         .arg("bestvideo+bestaudio")
         .arg("--embed-thumbnail")
         .arg("--embed-subs")
-        .arg("--add-metadata")
-        .arg("--metadata-from-title")
-        .arg("--write-info-json")
+        .arg("--embed-metadata")
         .arg(link)
         .current_dir(directory)
         .output()
@@ -110,4 +135,22 @@ async fn download(link: String, directory: String) {
         .expect("Failed to execute command");
 
     println!("{:?}", output);
+    println!("best");
+}
+
+async fn mp4_dl(link: String, directory: String) {
+    let output = Command::new("yt-dlp")
+        .arg("-f")
+        .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best")
+        .arg("--embed-thumbnail")
+        .arg("--embed-subs")
+        .arg("--embed-metadata")
+        .arg(link)
+        .current_dir(directory)
+        .output()
+        .await
+        .expect("Failed to execute command");
+
+    println!("{:?}", output);
+    println!("mp4");
 }

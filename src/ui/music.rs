@@ -9,6 +9,7 @@ pub struct MusicDownload {
     pub out_directory: String,
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
+    pub format: i8,
 }
 
 impl Default for MusicDownload {
@@ -21,6 +22,7 @@ impl Default for MusicDownload {
             out_directory: default_directory,
             status_complete: Arc::new(AtomicBool::new(false)),
             status_pending: Arc::new(AtomicBool::new(false)),
+            format: 1,
         }
     }
 }
@@ -33,11 +35,31 @@ impl MusicDownload {
     fn start_download_status(&mut self) {
         self.status_pending.store(true, Ordering::Relaxed);
     }
+    fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
+        if self.format == numbername {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new(name).color(Color32::LIGHT_GREEN),
+                ))
+                .clicked()
+            {
+                self.format = numbername;
+            };
+        } else {
+            if ui.button(name).clicked() {
+                self.format = numbername;
+            };
+        }
+    }
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
                 ui.menu_button("Format", |ui| {
-                    ui.label("still empty");
+                    self.format_button(ui, "OPUS", 1);
+                    self.format_button(ui, "FLAC", 2);
+                    self.format_button(ui, "MP3", 3);
+                    self.format_button(ui, "M4A", 4);
+                    self.format_button(ui, "WAV", 5);
                 });
                 if ui.button("Close").clicked() {
                     ui.close_menu();
@@ -81,11 +103,12 @@ impl MusicDownload {
 
                 let link = self.link.clone();
                 let directory = self.out_directory.clone();
+                let format = self.format.clone();
                 let complete = self.status_complete.clone();
                 let doing = self.status_pending.clone();
 
                 tokio::task::spawn(async move {
-                    download(link, directory).await;
+                    download(link, directory, format).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -94,12 +117,27 @@ impl MusicDownload {
     }
 }
 
-async fn download(link: String, directory: String) {
+async fn download(link: String, directory: String, format: i8) {
+    if format == 1 {
+        format_dl(link, directory, "opus").await;
+    } else if format == 2 {
+        format_dl(link, directory, "flac").await;
+    } else if format == 3 {
+        format_dl(link, directory, "mp3").await;
+    } else if format == 4 {
+        format_dl(link, directory, "m4a").await;
+    } else if format == 5 {
+        format_dl(link, directory, "wav").await;
+    }
+}
+async fn format_dl(link: String, directory: String, format_name: &str) {
     let output = Command::new("yt-dlp")
         .arg("-i")
         .arg("-x")
         .arg("--audio-quality")
         .arg("0")
+        .arg("--audio-format")
+        .arg(format_name)
         .arg("--embed-thumbnail")
         .arg("--add-metadata")
         .arg("--metadata-from-title")

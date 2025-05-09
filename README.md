@@ -3,7 +3,7 @@
 
 ## Feature
 
-- Download music from link with metadata/cover embeded
+- Download music from link with metadata/cover embedded
 - Download Video from link with highest quality with some metadata embeded
 
 My software will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube
