@@ -1,12 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-mod dl;
+mod ui;
 
-use dirs;
-use dl::{b_music, b_video};
-use eframe::egui::{self, Color32, global_theme_preference_buttons};
-use native_dialog::DialogBuilder;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use eframe::egui::{self, global_theme_preference_buttons};
 use tokio;
 
 #[tokio::main]
@@ -27,32 +22,15 @@ async fn main() -> eframe::Result {
 }
 
 struct MyApp {
-    link: String,
-    out_directory: String,
-    status_complete: Arc<AtomicBool>,
-    status_pending: Arc<AtomicBool>,
-}
-
-impl MyApp {
-    fn reset_download_status(&mut self) {
-        self.status_complete.store(false, Ordering::Relaxed);
-        self.status_pending.store(false, Ordering::Relaxed);
-    }
-    fn start_download_status(&mut self) {
-        self.status_pending.store(true, Ordering::Relaxed);
-    }
+    music_download: ui::music::MusicDownload,
+    video_download: ui::video::VideoDownload,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
-        let default_directory = dirs::download_dir()
-            .map(|path| path.to_string_lossy().into_owned())
-            .unwrap_or_else(|| String::from(""));
         Self {
-            link: "".to_string(),
-            out_directory: default_directory,
-            status_complete: Arc::new(AtomicBool::new(false)),
-            status_pending: Arc::new(AtomicBool::new(false)),
+            music_download: ui::music::MusicDownload::default(),
+            video_download: ui::video::VideoDownload::default(),
         }
     }
 }
@@ -85,110 +63,18 @@ impl eframe::App for MyApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.with_layout(
-                egui::Layout::top_down_justified(egui::Align::Center),
-                |ui| {
-                    ui.label("Status of your last action: ");
-                    if self.status_complete.load(Ordering::Relaxed) {
-                        ui.colored_label(Color32::GREEN, "Done!");
-                    } else if self.status_pending.load(Ordering::Relaxed) {
-                        ui.spinner();
-                    }
-                },
-            );
-        });
+        egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
         //music
         egui::Window::new("Music-dl")
             .default_open(false)
             .resizable(false)
-            .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    let link_label = ui.label("link: ");
-                    ui.text_edit_singleline(&mut self.link)
-                        .labelled_by(link_label.id);
-
-                    let dir_label = ui.label("Directory: ");
-                    if ui
-                        .text_edit_singleline(&mut self.out_directory)
-                        .labelled_by(dir_label.id)
-                        .clicked()
-                    {
-                        let path = DialogBuilder::file()
-                            .set_location(&self.out_directory)
-                            .open_single_dir()
-                            .show()
-                            .unwrap();
-
-                        if let Some(p) = path {
-                            self.out_directory = p.to_string_lossy().into_owned();
-                        } else {
-                            println!("No file selected.");
-                        }
-                    };
-
-                    if ui.button("Download").clicked() {
-                        self.reset_download_status();
-                        self.start_download_status();
-
-                        let link = self.link.clone();
-                        let directory = self.out_directory.clone();
-                        let complete = self.status_complete.clone();
-                        let doing = self.status_pending.clone();
-
-                        tokio::task::spawn(async move {
-                            b_music::download(link, directory).await;
-                            complete.store(true, Ordering::Relaxed);
-                            doing.store(false, Ordering::Relaxed);
-                        });
-                    }
-                });
-            });
+            .show(ctx, |ui| self.music_download.ui(ui));
         //Video
         egui::Window::new("Video-dl")
             .default_open(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    let link_label = ui.label("link: ");
-                    ui.text_edit_singleline(&mut self.link)
-                        .labelled_by(link_label.id);
-
-                    let dir_label = ui.label("Directory: ");
-                    if ui
-                        .text_edit_singleline(&mut self.out_directory)
-                        .labelled_by(dir_label.id)
-                        .clicked()
-                    {
-                        let path = DialogBuilder::file()
-                            .set_location(&self.out_directory)
-                            .open_single_dir()
-                            .show()
-                            .unwrap();
-
-                        if let Some(p) = path {
-                            self.out_directory = p.to_string_lossy().into_owned();
-                        } else {
-                            println!("No file selected.");
-                        }
-                    };
-
-                    if ui.button("Download").clicked() {
-                        self.reset_download_status();
-                        self.start_download_status();
-
-                        let link = self.link.clone();
-                        let directory = self.out_directory.clone();
-                        let complete = self.status_complete.clone();
-                        let doing = self.status_pending.clone();
-
-                        tokio::task::spawn(async move {
-                            b_video::download(link, directory).await;
-                            complete.store(true, Ordering::Relaxed);
-                            doing.store(false, Ordering::Relaxed);
-                        });
-                    }
-                });
+                self.video_download.ui(ui);
             });
     }
 }
