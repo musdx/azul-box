@@ -23,13 +23,13 @@ The features will be really random because this is a software I made to randomly
 sudo pacman -S ffmpeg yt-dlp python-mutagen
 ```
 
-### Linuxmint
+### Linuxmint:
 
 ```
 sudo apt install ffmpeg yt-dlp python3-mutagen
 ```
 
-### openSUSE Tumbleweed
+### openSUSE Tumbleweed:
 
 You may need to add some extra official opensuse repo.
 
@@ -37,7 +37,7 @@ You may need to add some extra official opensuse repo.
 sudo zypper in yt-dlp python-mutagen
 ```
 
-### Fedora(non atomic)
+### Fedora(non atomic):
 
 ```
 sudo dnf install ffmpeg-free yt-dlp python3-mutagen
