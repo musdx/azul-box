@@ -25,6 +25,7 @@ struct MyApp {
     music_download: ui::music::MusicDownload,
     video_download: ui::video::VideoDownload,
     pinterest_download: ui::pinterest::PinterstDownload,
+    image_convert: ui::img_convert::ImgConvert,
 }
 
 impl Default for MyApp {
@@ -33,6 +34,7 @@ impl Default for MyApp {
             music_download: ui::music::MusicDownload::default(),
             video_download: ui::video::VideoDownload::default(),
             pinterest_download: ui::pinterest::PinterstDownload::default(),
+            image_convert: ui::img_convert::ImgConvert::default(),
         }
     }
 }
@@ -84,6 +86,12 @@ impl eframe::App for MyApp {
             .resizable(false)
             .show(ctx, |ui| {
                 self.pinterest_download.ui(ui);
+            });
+        egui::Window::new("Image converter")
+            .default_open(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                self.image_convert.ui(ui);
             });
     }
 }
