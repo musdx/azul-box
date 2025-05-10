@@ -1,10 +1,10 @@
 #!/bin/bash
 
+echo "make directory"
+
 sudo mkdir /opt/azul_box/
 
 cargo build --release
-
-echo "make directory"
 
 echo "copy content"
 
