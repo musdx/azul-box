@@ -9,7 +9,7 @@
 
 The video/music download will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube.
 
-This is a software i made to just randomly do something I need so feature will be really random
+The features will be really random because this is a software I made to randomly do something I needed.
 
 ## Installation
 
