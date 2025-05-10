@@ -24,6 +24,7 @@ async fn main() -> eframe::Result {
 struct MyApp {
     music_download: ui::music::MusicDownload,
     video_download: ui::video::VideoDownload,
+    pinterest_download: ui::pinterest::PinterstDownload,
 }
 
 impl Default for MyApp {
@@ -31,6 +32,7 @@ impl Default for MyApp {
         Self {
             music_download: ui::music::MusicDownload::default(),
             video_download: ui::video::VideoDownload::default(),
+            pinterest_download: ui::pinterest::PinterstDownload::default(),
         }
     }
 }
@@ -75,6 +77,13 @@ impl eframe::App for MyApp {
             .resizable(false)
             .show(ctx, |ui| {
                 self.video_download.ui(ui);
+            });
+        //Pinterest
+        egui::Window::new("Pinterest-dl")
+            .default_open(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                self.pinterest_download.ui(ui);
             });
     }
 }
