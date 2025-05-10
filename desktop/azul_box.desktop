@@ -5,4 +5,4 @@ Exec=/opt/azul_box/azul-box
 Icon=/opt/azul_box/assets/logo.svg
 Terminal=false
 Type=Application
-Categories=Utility;
+Categories=AudioVideo;
