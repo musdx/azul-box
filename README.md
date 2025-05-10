@@ -11,29 +11,50 @@ The video/music download will technically support all yt-dlp [support list](http
 
 The features will be really random because this is a software I made to randomly do something I needed.
 
-## Installation
-
-You will need to have [rustup](https://rustup.rs/) already installed.
-
-Use this follow command to build then install the app. You will still need to install dependencies.
-
-```
-git clone https://github.com/musdx/azul-box
-cd azul-box
-sudo chmod +x install.sh
-./install.sh
-```
-
 ## Dependencies
 
 - ffmpeg & ffprobe
 - yt-dlp
 - mutagen
 
-To download dependencies in archlinux
+### Archlinux:
 
 ```
 sudo pacman -S ffmpeg yt-dlp python-mutagen
+```
+
+### Linuxmint
+
+```
+sudo apt install ffmpeg yt-dlp python3-mutagen
+```
+
+### openSUSE Tumbleweed
+
+You may need to add some extra official opensuse repo.
+
+```
+sudo zypper in yt-dlp python-mutagen
+```
+
+### Fedora(non atomic)
+
+```
+sudo dnf install ffmpeg-free yt-dlp python3-mutagen
+```
+
+## Installation
+
+You will need to have [rustup](https://rustup.rs/) already installed.
+
+Use this follow command to build then install the app. You will still need to install dependencies before run the install script.
+
+
+```
+git clone https://github.com/musdx/azul-box
+cd azul-box
+sudo chmod +x install.sh
+./install.sh
 ```
 
 ## Images
