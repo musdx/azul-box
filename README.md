@@ -7,7 +7,7 @@
 - Download Video from link with highest quality with some metadata embeded
 - Download Pin from pinterest without account
 
-My software will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube
+For the video/music download will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube.
 
 This is a software i made to just randomly do something I need so feature will be really random
 
