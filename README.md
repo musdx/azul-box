@@ -6,6 +6,7 @@
 - Download music from link with metadata/cover embedded
 - Download Video from link with highest quality with some metadata embeded
 - Download Pin from pinterest without account
+- Convert Images formats
 
 The video/music download will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube.
 
@@ -62,5 +63,4 @@ sudo chmod +x install.sh
 <div align="center">
 <img src="./assets/pic1.png" width="350"></img>
 <img src="./assets/pic2.png" width="350"></img>
-<img src="./assets/pic3.png" width="350"></img>
 </div>

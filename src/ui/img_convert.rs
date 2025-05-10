@@ -15,7 +15,7 @@ pub struct ImgConvert {
 
 impl Default for ImgConvert {
     fn default() -> Self {
-        let default_directory = dirs::home_dir()
+        let default_directory = dirs::picture_dir()
             .map(|path| path.to_string_lossy().into_owned())
             .unwrap_or_else(|| String::from(""));
         Self {
@@ -80,7 +80,7 @@ impl ImgConvert {
         });
         ui.separator();
         ui.vertical_centered(|ui| {
-            let link_label = ui.label("link: ");
+            let link_label = ui.label("Image: ");
             if ui
                 .text_edit_singleline(&mut self.input_file)
                 .labelled_by(link_label.id)
@@ -131,7 +131,7 @@ impl ImgConvert {
                 }
             };
 
-            if ui.button("Download").clicked() {
+            if ui.button("Convert").clicked() {
                 self.reset_download_status();
                 self.start_download_status();
 
