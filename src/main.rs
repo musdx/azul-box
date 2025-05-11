@@ -13,11 +13,7 @@ async fn main() -> eframe::Result {
     eframe::run_native(
         "Azul box",
         options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-
-            Ok(Box::<MyApp>::default())
-        }),
+        Box::new(|_cc| Ok(Box::<MyApp>::default())),
     )
 }
 
@@ -26,6 +22,7 @@ struct MyApp {
     video_download: ui::video::VideoDownload,
     pinterest_download: ui::pinterest::PinterstDownload,
     image_convert: ui::img_convert::ImgConvert,
+    video_convert: ui::video_convert::VideoConvert,
 }
 
 impl Default for MyApp {
@@ -35,6 +32,7 @@ impl Default for MyApp {
             video_download: ui::video::VideoDownload::default(),
             pinterest_download: ui::pinterest::PinterstDownload::default(),
             image_convert: ui::img_convert::ImgConvert::default(),
+            video_convert: ui::video_convert::VideoConvert::default(),
         }
     }
 }
@@ -87,11 +85,19 @@ impl eframe::App for MyApp {
             .show(ctx, |ui| {
                 self.pinterest_download.ui(ui);
             });
+        //Img convert
         egui::Window::new("Image converter")
             .default_open(false)
             .resizable(false)
             .show(ctx, |ui| {
                 self.image_convert.ui(ui);
+            });
+        //Video convert
+        egui::Window::new("Video converter")
+            .default_open(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                self.video_convert.ui(ui);
             });
     }
 }

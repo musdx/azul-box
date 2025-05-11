@@ -44,10 +44,12 @@ impl MusicDownload {
                 .clicked()
             {
                 self.format = numbername;
+                ui.close_menu();
             };
         } else {
             if ui.button(name).clicked() {
                 self.format = numbername;
+                ui.close_menu();
             };
         }
     }

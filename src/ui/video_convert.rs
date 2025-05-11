@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::process::Command;
 
-pub struct ImgConvert {
+pub struct VideoConvert {
     pub out_directory: String,
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
@@ -13,9 +13,9 @@ pub struct ImgConvert {
     pub input_file: String,
 }
 
-impl Default for ImgConvert {
+impl Default for VideoConvert {
     fn default() -> Self {
-        let default_directory = dirs::picture_dir()
+        let default_directory = dirs::video_dir()
             .map(|path| path.to_string_lossy().into_owned())
             .unwrap_or_else(|| String::from(""));
         Self {
@@ -29,7 +29,7 @@ impl Default for ImgConvert {
     }
 }
 
-impl ImgConvert {
+impl VideoConvert {
     fn reset_download_status(&mut self) {
         self.status_complete.store(false, Ordering::Relaxed);
         self.status_pending.store(false, Ordering::Relaxed);
@@ -60,14 +60,23 @@ impl ImgConvert {
             ui.horizontal_wrapped(|ui| {
                 ui.label("Output: ");
                 ui.menu_button(self.format_out.clone(), |ui| {
-                    self.format_out_button(ui, "jpg");
-                    self.format_out_button(ui, "png");
-                    self.format_out_button(ui, "bmp");
-                    self.format_out_button(ui, "tif");
+                    self.format_out_button(ui, "mp4");
+                    self.format_out_button(ui, "avi");
+                    self.format_out_button(ui, "mkv");
+                    self.format_out_button(ui, "mov");
+                    self.format_out_button(ui, "wmv");
+                    self.format_out_button(ui, "flv");
+                    self.format_out_button(ui, "webm");
+                    self.format_out_button(ui, "mpg");
+                    self.format_out_button(ui, "3gp");
+                    self.format_out_button(ui, "ogv");
+                    self.format_out_button(ui, "m4v");
+                    self.format_out_button(ui, "asf");
+                    self.format_out_button(ui, "vob");
+                    self.format_out_button(ui, "ts");
+                    self.format_out_button(ui, "f4v");
+                    self.format_out_button(ui, "dv");
                     self.format_out_button(ui, "gif");
-                    self.format_out_button(ui, "webp");
-                    self.format_out_button(ui, "heic");
-                    self.format_out_button(ui, "avif");
                 });
             });
             ui.add_space(10.0);
@@ -82,7 +91,7 @@ impl ImgConvert {
         });
         ui.separator();
         ui.vertical_centered(|ui| {
-            let link_label = ui.label("Image: ");
+            let link_label = ui.label("Video: ");
             if ui
                 .text_edit_singleline(&mut self.input_file)
                 .labelled_by(link_label.id)
@@ -91,10 +100,10 @@ impl ImgConvert {
                 let path = DialogBuilder::file()
                     .set_location(&self.out_directory)
                     .add_filter(
-                        "Images",
+                        "Video",
                         &[
-                            "jpg", "jpeg", "png", "bmp", "tif", "tiff", "gif", "webp", "heic",
-                            "heif", "cr2", "nef", "dng", "svg", "psd", "avif",
+                            "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "mpeg", "mpg", "3gp",
+                            "ogv", "m4v", "asf", "vob", "ts", "f4v", "dv",
                         ],
                     )
                     .open_single_file()
@@ -155,8 +164,6 @@ async fn download(input: String, directory: String, format_out: String) {
     let output = Command::new("ffmpeg")
         .arg("-i")
         .arg(&input)
-        .arg("-q:v")
-        .arg("100")
         .arg(format!("{}.{}", filename, format_out))
         .current_dir(directory)
         .output()
