@@ -8,6 +8,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio;
+use tokio::process::Command;
 use ureq::get;
 
 pub struct PinterstDownload {
@@ -15,6 +16,7 @@ pub struct PinterstDownload {
     pub out_directory: String,
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
+    pub imgoranime: bool,
 }
 
 impl Default for PinterstDownload {
@@ -27,6 +29,7 @@ impl Default for PinterstDownload {
             out_directory: default_directory,
             status_complete: Arc::new(AtomicBool::new(false)),
             status_pending: Arc::new(AtomicBool::new(false)),
+            imgoranime: false,
         }
     }
 }
@@ -47,10 +50,14 @@ impl PinterstDownload {
             } else if self.status_pending.load(Ordering::Relaxed) {
                 ui.spinner();
             }
+            ui.add_space(20.0);
+            ui.separator();
+            ui.add_space(20.0);
+            ui.checkbox(&mut self.imgoranime, "Video");
         });
         ui.separator();
         ui.vertical_centered(|ui| {
-            let link_label = ui.label("link: ");
+            let link_label = ui.label("Link: ");
             ui.text_edit_singleline(&mut self.link)
                 .labelled_by(link_label.id);
 
@@ -81,9 +88,10 @@ impl PinterstDownload {
                 let directory = self.out_directory.clone();
                 let complete = self.status_complete.clone();
                 let doing = self.status_pending.clone();
+                let videoornot = self.imgoranime.clone();
 
                 tokio::task::spawn(async move {
-                    let _ = download(link, directory).await;
+                    download(link, directory, videoornot).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -92,7 +100,20 @@ impl PinterstDownload {
     }
 }
 
-async fn download(link: String, directory: String) -> Result<(), Box<dyn Error>> {
+async fn download(link: String, directory: String, videoorimg: bool) {
+    if videoorimg {
+        let output = Command::new("yt-dlp")
+            .arg(&link)
+            .current_dir(&directory)
+            .output()
+            .await;
+        println!("{:?}", output)
+    } else if !videoorimg {
+        let _ = pin_pic_dl(&link, &directory);
+    }
+}
+
+fn pin_pic_dl(link: &String, directory: &String) -> Result<(), Box<dyn Error>> {
     let body = ureq::get(link)
         .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
         .call()?
@@ -111,7 +132,7 @@ async fn download(link: String, directory: String) -> Result<(), Box<dyn Error>>
             let (_, body) = response.into_parts();
 
             let mut file =
-                File::create(Path::new(&directory).join(filename)).expect("Failed to create file");
+                File::create(Path::new(directory).join(&filename)).expect("Failed to create file");
             copy(&mut body.into_reader(), &mut file).expect("Failed to save image");
 
             println!("Image downloaded successfully: {}", filename);

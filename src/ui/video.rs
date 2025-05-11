@@ -73,7 +73,7 @@ impl VideoDownload {
         });
         ui.separator();
         ui.vertical_centered(|ui| {
-            let link_label = ui.label("link: ");
+            let link_label = ui.label("Link: ");
             ui.text_edit_singleline(&mut self.link)
                 .labelled_by(link_label.id);
 

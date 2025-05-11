@@ -51,7 +51,7 @@ You will need to have [rustup](https://rustup.rs/) already installed.
 
 Use this follow command to build then install the app. You will still need to install dependencies before run the install script.
 
-
+#### You may want to use download the release source and build from there instead of clone the repo.
 ```
 git clone https://github.com/musdx/azul-box
 cd azul-box
@@ -67,4 +67,3 @@ sudo chmod +x install.sh
 </div>
 
 [azul-0.1.0.webm](https://github.com/user-attachments/assets/aa9c66fa-2fcf-4e7f-a454-e2b73fdf8f19)
-
