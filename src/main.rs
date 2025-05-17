@@ -23,6 +23,7 @@ struct MyApp {
     pinterest_download: ui::pinterest::PinterstDownload,
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
+    colors: ui::colors::Colors,
 }
 
 impl Default for MyApp {
@@ -33,6 +34,7 @@ impl Default for MyApp {
             pinterest_download: ui::pinterest::PinterstDownload::default(),
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),
+            colors: ui::colors::Colors::default(),
         }
     }
 }
@@ -98,6 +100,12 @@ impl eframe::App for MyApp {
             .resizable(false)
             .show(ctx, |ui| {
                 self.video_convert.ui(ui);
+            });
+        egui::Window::new("Colors")
+            .default_open(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                self.colors.ui(ui);
             });
     }
 }
