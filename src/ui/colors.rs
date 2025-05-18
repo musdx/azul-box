@@ -44,8 +44,11 @@ impl Colors {
         });
         ui.horizontal(|ui| {
             ui.colored_label(self.color_srgba, "Hex:");
-            ui.add_space(10.0);
-            let response = ui.add_sized([100.0, 20.0], TextEdit::singleline(&mut self.hex_input));
+            ui.add_space(20.0);
+            let response = ui.add_sized(
+                [100.0, 20.0],
+                TextEdit::singleline(&mut self.hex_input).background_color(self.color_srgba),
+            );
 
             if response.changed() {
                 if let Some(parsed_color) = parse_hex_color(&self.hex_input) {
