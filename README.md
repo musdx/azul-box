@@ -8,6 +8,7 @@
 - Download Pin from pinterest without account
 - Convert Images formats powered by ffmpeg
 - Convert Video formats powered by ffmpeg
+- A trash color picker
 
 The video/music download will technically support all yt-dlp [support list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) not just youtube.
 

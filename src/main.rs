@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-mod ui;
 
+mod ui;
 use eframe::egui::{self, global_theme_preference_buttons};
 use tokio;
 
@@ -11,15 +11,15 @@ async fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "Azul box",
+        "azul_box",
         options,
         Box::new(|_cc| Ok(Box::<MyApp>::default())),
     )
 }
 
 struct MyApp {
-    music_download: ui::music::MusicDownload,
-    video_download: ui::video::VideoDownload,
+    music_download: ui::music_dl::MusicDownload,
+    video_download: ui::video_dl::VideoDownload,
     pinterest_download: ui::pinterest::PinterstDownload,
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
@@ -29,8 +29,8 @@ struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         Self {
-            music_download: ui::music::MusicDownload::default(),
-            video_download: ui::video::VideoDownload::default(),
+            music_download: ui::music_dl::MusicDownload::default(),
+            video_download: ui::video_dl::VideoDownload::default(),
             pinterest_download: ui::pinterest::PinterstDownload::default(),
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),

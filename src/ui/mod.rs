@@ -1,6 +1,6 @@
 pub mod colors;
 pub mod img_convert;
-pub mod music;
+pub mod music_dl;
 pub mod pinterest;
-pub mod video;
 pub mod video_convert;
+pub mod video_dl;
