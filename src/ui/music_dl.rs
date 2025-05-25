@@ -10,6 +10,8 @@ pub struct MusicDownload {
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
     pub format: i8,
+    pub lyrics: bool,
+    pub frag: i8,
 }
 
 impl Default for MusicDownload {
@@ -22,7 +24,9 @@ impl Default for MusicDownload {
             out_directory: default_directory,
             status_complete: Arc::new(AtomicBool::new(false)),
             status_pending: Arc::new(AtomicBool::new(false)),
-            format: 1,
+            format: 2,
+            lyrics: false,
+            frag: 1,
         }
     }
 }
@@ -63,6 +67,21 @@ impl MusicDownload {
                     self.format_button(ui, "M4A", 4);
                     self.format_button(ui, "WAV", 5);
                 });
+                if self.lyrics {
+                    if ui
+                        .add(egui::Button::new(
+                            egui::RichText::new("Lyrics").color(Color32::LIGHT_GREEN),
+                        ))
+                        .clicked()
+                    {
+                        self.lyrics = false;
+                    };
+                } else {
+                    if ui.button("Lyrics").clicked() {
+                        self.lyrics = true;
+                    };
+                }
+                ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
                 if ui.button("Close").clicked() {
                     ui.close_menu();
                 }
@@ -108,9 +127,11 @@ impl MusicDownload {
                 let format = self.format.clone();
                 let complete = self.status_complete.clone();
                 let doing = self.status_pending.clone();
+                let lyrics = self.lyrics.clone();
+                let frags = self.frag.clone();
 
                 tokio::task::spawn(async move {
-                    download(link, directory, format).await;
+                    download(link, directory, format, lyrics, frags).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -119,42 +140,77 @@ impl MusicDownload {
     }
 }
 
-async fn download(link: String, directory: String, format: i8) {
+async fn download(link: String, directory: String, format: i8, lyrics: bool, frags: i8) {
     if format == 1 {
-        format_dl(link, directory, "opus").await;
+        format_dl(link, directory, "opus", lyrics, frags).await;
     } else if format == 2 {
-        format_dl(link, directory, "flac").await;
+        format_dl(link, directory, "flac", lyrics, frags).await;
     } else if format == 3 {
-        format_dl(link, directory, "mp3").await;
+        format_dl(link, directory, "mp3", lyrics, frags).await;
     } else if format == 4 {
-        format_dl(link, directory, "m4a").await;
+        format_dl(link, directory, "m4a", lyrics, frags).await;
     } else if format == 5 {
-        format_dl(link, directory, "wav").await;
+        format_dl(link, directory, "wav", lyrics, frags).await;
     }
 }
-async fn format_dl(link: String, directory: String, format_name: &str) {
-    let output = Command::new("yt-dlp")
-        .arg("-i")
-        .arg("-x")
-        .arg("--audio-quality")
-        .arg("0")
-        .arg("--audio-format")
-        .arg(format_name)
-        .arg("--embed-thumbnail")
-        .arg("--add-metadata")
-        .arg("--metadata-from-title")
-        .arg("%(title)s")
-        .arg("--parse-metadata")
-        .arg("title:%(title)s")
-        .arg("--parse-metadata")
-        .arg("uploader:%(artist)s")
-        .arg("--output")
-        .arg("%(title)s.%(ext)s")
-        .arg(link)
-        .current_dir(directory)
-        .output()
-        .await
-        .expect("Failed to execute command");
+async fn format_dl(link: String, directory: String, format_name: &str, lyrics: bool, frags: i8) {
+    let n = frags.to_string().to_owned();
+    println!("{n}");
+    if lyrics {
+        let output = Command::new("yt-dlp")
+            .arg("--concurrent-fragments")
+            .arg(n)
+            .arg("-i")
+            .arg("-x")
+            .arg("--audio-quality")
+            .arg("0")
+            .arg("--audio-format")
+            .arg(format_name)
+            .arg("--write-subs")
+            .arg("--embed-subs")
+            .arg("--embed-thumbnail")
+            .arg("--add-metadata")
+            .arg("--metadata-from-title")
+            .arg("%(title)s")
+            .arg("--parse-metadata")
+            .arg("title:%(title)s")
+            .arg("--parse-metadata")
+            .arg("uploader:%(artist)s")
+            .arg("--output")
+            .arg("%(title)s.%(ext)s")
+            .arg(link)
+            .current_dir(directory)
+            .output()
+            .await
+            .expect("Failed to execute command");
 
-    println!("{:?}", output)
+        println!("{:?}", output)
+    } else {
+        let output = Command::new("yt-dlp")
+            .arg("--concurrent-fragments")
+            .arg(n)
+            .arg("-i")
+            .arg("-x")
+            .arg("--audio-quality")
+            .arg("0")
+            .arg("--audio-format")
+            .arg(format_name)
+            .arg("--embed-thumbnail")
+            .arg("--add-metadata")
+            .arg("--metadata-from-title")
+            .arg("%(title)s")
+            .arg("--parse-metadata")
+            .arg("title:%(title)s")
+            .arg("--parse-metadata")
+            .arg("uploader:%(artist)s")
+            .arg("--output")
+            .arg("%(title)s.%(ext)s")
+            .arg(link)
+            .current_dir(directory)
+            .output()
+            .await
+            .expect("Failed to execute command");
+
+        println!("{:?}", output)
+    }
 }

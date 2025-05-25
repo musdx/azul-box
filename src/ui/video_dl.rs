@@ -10,6 +10,7 @@ pub struct VideoDownload {
     pub status_complete: Arc<AtomicBool>,
     pub status_pending: Arc<AtomicBool>,
     pub format: i8,
+    pub frag: i8,
 }
 
 impl Default for VideoDownload {
@@ -23,6 +24,7 @@ impl Default for VideoDownload {
             status_complete: Arc::new(AtomicBool::new(false)),
             status_pending: Arc::new(AtomicBool::new(false)),
             format: 1,
+            frag: 1,
         }
     }
 }
@@ -63,6 +65,7 @@ impl VideoDownload {
                 if ui.button("Close").clicked() {
                     ui.close_menu();
                 }
+                ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"))
             });
             ui.label("Status: ");
             if self.status_complete.load(Ordering::Relaxed) {
@@ -105,9 +108,10 @@ impl VideoDownload {
                 let format = self.format.clone();
                 let complete = self.status_complete.clone();
                 let doing = self.status_pending.clone();
+                let frags = self.frag.clone();
 
                 tokio::task::spawn(async move {
-                    download(link, directory, format).await;
+                    download(link, directory, format, frags).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -116,15 +120,19 @@ impl VideoDownload {
     }
 }
 
-async fn download(link: String, directory: String, format: i8) {
+async fn download(link: String, directory: String, format: i8, frag: i8) {
     if format == 1 {
-        mkv_dl(link, directory).await;
+        mkv_dl(link, directory, frag).await;
     } else if format == 2 {
-        mp4_dl(link, directory).await;
+        mp4_dl(link, directory, frag).await;
     }
 }
-async fn mkv_dl(link: String, directory: String) {
+async fn mkv_dl(link: String, directory: String, frag: i8) {
+    let n = frag.to_string().to_owned();
+    println!("{n}");
     let output = Command::new("yt-dlp")
+        .arg("--concurrent-fragments")
+        .arg(n)
         .arg("-f")
         .arg("bestvideo+bestaudio")
         .arg("--embed-thumbnail")
@@ -140,8 +148,12 @@ async fn mkv_dl(link: String, directory: String) {
     println!("best");
 }
 
-async fn mp4_dl(link: String, directory: String) {
+async fn mp4_dl(link: String, directory: String, frag: i8) {
+    let n = frag.to_string().to_owned();
+    println!("{n}");
     let output = Command::new("yt-dlp")
+        .arg("--concurrent-fragments")
+        .arg(n)
         .arg("-f")
         .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best")
         .arg("--embed-thumbnail")
