@@ -2,7 +2,7 @@ use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use regex::Regex;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -174,7 +174,7 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
             .arg(&format_name)
             .arg("--write-subs")
             .arg("--convert-subs")
-            .arg("srt")
+            .arg("lrc")
             .arg("--embed-thumbnail")
             .arg("--add-metadata")
             .arg("--metadata-from-title")
@@ -229,20 +229,19 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
 }
 
 fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
-    println!("I run");
     let regex = Regex::new("'[^']*'").unwrap();
     for i in files.into_iter() {
         println!("i: {i}");
         let item = regex.find(i).unwrap().as_str().trim();
         println!("item: {item}");
-        let filename = &item.split(format_name).nth(0).unwrap().replace("'", "");
-        let filename = filename.split("/").last().unwrap();
+        let extension = format!(".{}", format_name);
+        let filename = &item.split("/").last().unwrap();
+        let filename = filename.split(&extension).nth(0).unwrap();
         println!("filename: {filename}");
-        let lyrics_file = format!("{}/{}en.srt", &directory, &filename);
-        let music_file = format!("{}/{}{}", &directory, &filename, &format_name);
-        let lyrics_file = Path::new(&lyrics_file);
+        let music_file = &item[1..item.len() - 1].to_string();
+        let lyrics_file = finder_lyrics(&directory, &filename).unwrap();
         let music_file = Path::new(&music_file);
-        let lyrics = match fs::read_to_string(lyrics_file) {
+        let lyrics = match fs::read_to_string(&lyrics_file) {
             Ok(file) => file,
             Err(error) => {
                 println!("{:?}", error);
@@ -258,4 +257,24 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
             let _ = fs::remove_file(&lyrics_file);
         };
     }
+}
+
+fn finder_lyrics(directory: &str, filename: &str) -> Option<PathBuf> {
+    let elements = fs::read_dir(&directory).ok()?;
+    let direc = PathBuf::new();
+    let mut thing = Some(direc);
+
+    for item in elements {
+        let path = item.ok()?.path();
+        if path.is_file() {
+            if path.extension().and_then(|ext| ext.to_str()) == Some("lrc") {
+                if let Some(file) = path.file_name().and_then(|name| name.to_str()) {
+                    if file.contains(filename) {
+                        thing = Some(path);
+                    }
+                }
+            }
+        }
+    }
+    thing
 }
