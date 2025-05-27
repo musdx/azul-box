@@ -1,8 +1,11 @@
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
+use regex::Regex;
+use std::fs;
+use std::path::Path;
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::process::Command;
 
 pub struct MusicDownload {
     pub link: String,
@@ -58,6 +61,9 @@ impl MusicDownload {
         }
     }
     pub fn ui(&mut self, ui: &mut egui::Ui) {
+        if !(self.format == 2) {
+            self.lyrics = false;
+        }
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
                 ui.menu_button("Format", |ui| {
@@ -67,7 +73,7 @@ impl MusicDownload {
                     self.format_button(ui, "M4A", 4);
                     self.format_button(ui, "WAV", 5);
                 });
-                if self.lyrics {
+                if self.lyrics && self.format == 2 {
                     if ui
                         .add(egui::Button::new(
                             egui::RichText::new("Lyrics").color(Color32::LIGHT_GREEN),
@@ -76,7 +82,7 @@ impl MusicDownload {
                     {
                         self.lyrics = false;
                     };
-                } else {
+                } else if self.format == 2 {
                     if ui.button("Lyrics").clicked() {
                         self.lyrics = true;
                     };
@@ -165,9 +171,10 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
             .arg("--audio-quality")
             .arg("0")
             .arg("--audio-format")
-            .arg(format_name)
+            .arg(&format_name)
             .arg("--write-subs")
-            .arg("--embed-subs")
+            .arg("--convert-subs")
+            .arg("srt")
             .arg("--embed-thumbnail")
             .arg("--add-metadata")
             .arg("--metadata-from-title")
@@ -178,13 +185,20 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
             .arg("uploader:%(artist)s")
             .arg("--output")
             .arg("%(title)s.%(ext)s")
-            .arg(link)
-            .current_dir(directory)
+            .arg("--exec")
+            .arg("{}")
+            .arg(&link)
+            .current_dir(&directory)
             .output()
-            .await
             .expect("Failed to execute command");
 
-        println!("{:?}", output)
+        let log = String::from_utf8(output.stdout).unwrap_or("Life suck".to_string());
+        println!("{log}");
+
+        let regex = Regex::new(r"\[Exec\] Executing command: '(?:[^']|'')*'").unwrap();
+        let files: Vec<&str> = regex.find_iter(&log).map(|file| file.as_str()).collect();
+
+        lyrics_work(files, format_name, directory);
     } else {
         let output = Command::new("yt-dlp")
             .arg("--concurrent-fragments")
@@ -208,9 +222,40 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
             .arg(link)
             .current_dir(directory)
             .output()
-            .await
             .expect("Failed to execute command");
 
         println!("{:?}", output)
+    }
+}
+
+fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
+    println!("I run");
+    let regex = Regex::new("'[^']*'").unwrap();
+    for i in files.into_iter() {
+        println!("i: {i}");
+        let item = regex.find(i).unwrap().as_str().trim();
+        println!("item: {item}");
+        let filename = &item.split(format_name).nth(0).unwrap().replace("'", "");
+        let filename = filename.split("/").last().unwrap();
+        println!("filename: {filename}");
+        let lyrics_file = format!("{}/{}en.srt", &directory, &filename);
+        let music_file = format!("{}/{}{}", &directory, &filename, &format_name);
+        let lyrics_file = Path::new(&lyrics_file);
+        let music_file = Path::new(&music_file);
+        let lyrics = match fs::read_to_string(lyrics_file) {
+            Ok(file) => file,
+            Err(error) => {
+                println!("{:?}", error);
+                "No-1-1!!!F".to_string()
+            }
+        };
+        if !(lyrics == "No-1-1!!!F") {
+            let _output = Command::new("metaflac")
+                .arg("--set-tag=lyrics=".to_owned() + &lyrics)
+                .arg(music_file)
+                .output();
+            println!("{:?}", _output);
+            let _ = fs::remove_file(&lyrics_file);
+        };
     }
 }

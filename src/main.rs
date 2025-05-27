@@ -101,6 +101,7 @@ impl eframe::App for MyApp {
             .show(ctx, |ui| {
                 self.video_convert.ui(ui);
             });
+        //Color
         egui::Window::new("Colors picker")
             .default_open(false)
             .resizable(false)
