@@ -19,17 +19,18 @@ The features will be really random because this is a software I made to randomly
 - ffmpeg & ffprobe
 - yt-dlp
 - mutagen
+- metaflac(from the flac package)
 
 ### Archlinux:
 
 ```
-sudo pacman -S ffmpeg yt-dlp python-mutagen
+sudo pacman -S ffmpeg yt-dlp python-mutagen flac
 ```
 
 ### Linuxmint:
 
 ```
-sudo apt install ffmpeg yt-dlp python3-mutagen
+sudo apt install ffmpeg yt-dlp python3-mutagen flac
 ```
 
 ### openSUSE Tumbleweed:
@@ -37,13 +38,13 @@ sudo apt install ffmpeg yt-dlp python3-mutagen
 You may need to add some extra official opensuse repo.
 
 ```
-sudo zypper in yt-dlp python-mutagen
+sudo zypper in yt-dlp python-mutagen flac
 ```
 
 ### Fedora(non atomic):
 
 ```
-sudo dnf install ffmpeg-free yt-dlp python3-mutagen
+sudo dnf install ffmpeg-free yt-dlp python3-mutagen flac
 ```
 
 ## Installation
