@@ -15,6 +15,7 @@ pub struct MusicDownload {
     pub format: i8,
     pub lyrics: bool,
     pub frag: i8,
+    pub sub_lang: String,
 }
 
 impl Default for MusicDownload {
@@ -30,6 +31,7 @@ impl Default for MusicDownload {
             format: 2,
             lyrics: false,
             frag: 1,
+            sub_lang: "en".to_string(),
         }
     }
 }
@@ -60,6 +62,80 @@ impl MusicDownload {
             };
         }
     }
+    fn sub_button(&mut self, ui: &mut egui::Ui, code: String, lang: String) {
+        if self.sub_lang == code {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new(&lang).color(Color32::LIGHT_GREEN),
+                ))
+                .clicked()
+            {
+                self.sub_lang = code;
+                ui.close_menu();
+            };
+        } else {
+            if ui.button(&lang).clicked() {
+                self.sub_lang = code;
+                ui.close_menu();
+            }
+        }
+    }
+    fn lang_choice(&mut self, ui: &mut egui::Ui) {
+        let language_codes: Vec<&str> = vec![
+            "en", // English
+            "fr", // French
+            "es", // Spanish
+            "zh", // Chinese
+            "de", // German
+            "ja", // Japanese
+            "ar", // Arabic
+            "ru", // Russian
+            "it", // Italian
+            "pt", // Portuguese
+            "nl", // Dutch
+            "sv", // Swedish
+            "no", // Norwegian
+            "fi", // Finnish
+            "da", // Danish
+            "pl", // Polish
+            "cs", // Czech
+            "hu", // Hungarian
+            "ro", // Romanian
+            "tr", // Turkish
+            "vi", // Vietnamese
+            "ko", //Korean
+        ];
+        let languages: Vec<&str> = vec![
+            "English",
+            "French",
+            "Spanish",
+            "Chinese",
+            "German",
+            "Japanese",
+            "Arabic",
+            "Russian",
+            "Italian",
+            "Portuguese",
+            "Dutch",
+            "Swedish",
+            "Norwegian",
+            "Finnish",
+            "Danish",
+            "Polish",
+            "Czech",
+            "Hungarian",
+            "Romanian",
+            "Turkish",
+            "Vietnamese",
+            "Korean",
+        ];
+        ui.menu_button("Langs", |ui| {
+            for (lang, code) in languages.iter().zip(language_codes.iter()) {
+                self.sub_button(ui, code.to_string(), lang.to_string());
+            }
+        });
+    }
+
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         if !(self.format == 2) {
             self.lyrics = false;
@@ -82,6 +158,7 @@ impl MusicDownload {
                     {
                         self.lyrics = false;
                     };
+                    self.lang_choice(ui);
                 } else if self.format == 2 {
                     if ui.button("Lyrics").clicked() {
                         self.lyrics = true;
@@ -135,9 +212,10 @@ impl MusicDownload {
                 let doing = self.status_pending.clone();
                 let lyrics = self.lyrics.clone();
                 let frags = self.frag.clone();
+                let lang_code = self.sub_lang.clone();
 
                 tokio::task::spawn(async move {
-                    download(link, directory, format, lyrics, frags).await;
+                    download(link, directory, format, lyrics, frags, lang_code).await;
                     complete.store(true, Ordering::Relaxed);
                     doing.store(false, Ordering::Relaxed);
                 });
@@ -146,23 +224,37 @@ impl MusicDownload {
     }
 }
 
-async fn download(link: String, directory: String, format: i8, lyrics: bool, frags: i8) {
+async fn download(
+    link: String,
+    directory: String,
+    format: i8,
+    lyrics: bool,
+    frags: i8,
+    lang_code: String,
+) {
     if format == 1 {
-        format_dl(link, directory, "opus", lyrics, frags).await;
+        format_dl(link, directory, "opus", lyrics, frags, lang_code).await;
     } else if format == 2 {
-        format_dl(link, directory, "flac", lyrics, frags).await;
+        format_dl(link, directory, "flac", lyrics, frags, lang_code).await;
     } else if format == 3 {
-        format_dl(link, directory, "mp3", lyrics, frags).await;
+        format_dl(link, directory, "mp3", lyrics, frags, lang_code).await;
     } else if format == 4 {
-        format_dl(link, directory, "m4a", lyrics, frags).await;
+        format_dl(link, directory, "m4a", lyrics, frags, lang_code).await;
     } else if format == 5 {
-        format_dl(link, directory, "wav", lyrics, frags).await;
+        format_dl(link, directory, "wav", lyrics, frags, lang_code).await;
     }
 }
-async fn format_dl(link: String, directory: String, format_name: &str, lyrics: bool, frags: i8) {
+async fn format_dl(
+    link: String,
+    directory: String,
+    format_name: &str,
+    lyrics: bool,
+    frags: i8,
+    lang_code: String,
+) {
     let n = frags.to_string().to_owned();
     println!("{n}");
-    if lyrics {
+    if lyrics && lang_code == "en" {
         let output = Command::new("yt-dlp")
             .arg("--concurrent-fragments")
             .arg(n)
@@ -173,6 +265,45 @@ async fn format_dl(link: String, directory: String, format_name: &str, lyrics: b
             .arg("--audio-format")
             .arg(&format_name)
             .arg("--write-subs")
+            .arg("--convert-subs")
+            .arg("lrc")
+            .arg("--embed-thumbnail")
+            .arg("--add-metadata")
+            .arg("--metadata-from-title")
+            .arg("%(title)s")
+            .arg("--parse-metadata")
+            .arg("title:%(title)s")
+            .arg("--parse-metadata")
+            .arg("uploader:%(artist)s")
+            .arg("--output")
+            .arg("%(title)s.%(ext)s")
+            .arg("--exec")
+            .arg("{}")
+            .arg(&link)
+            .current_dir(&directory)
+            .output()
+            .expect("Failed to execute command");
+
+        let log = String::from_utf8(output.stdout).unwrap_or("Life suck".to_string());
+        println!("{log}");
+
+        let regex = Regex::new(r"\[Exec\] Executing command: '(?:[^']|'')*'").unwrap();
+        let files: Vec<&str> = regex.find_iter(&log).map(|file| file.as_str()).collect();
+
+        lyrics_work(files, format_name, directory);
+    } else if lyrics && !(lang_code == "en") {
+        let output = Command::new("yt-dlp")
+            .arg("--concurrent-fragments")
+            .arg(n)
+            .arg("-i")
+            .arg("-x")
+            .arg("--audio-quality")
+            .arg("0")
+            .arg("--audio-format")
+            .arg(&format_name)
+            .arg("--write-subs")
+            .arg("--sub-langs")
+            .arg(&lang_code)
             .arg("--convert-subs")
             .arg("lrc")
             .arg("--embed-thumbnail")
@@ -248,14 +379,16 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
                 "No-1-1!!!F".to_string()
             }
         };
-        if !(lyrics == "No-1-1!!!F") {
+        if !(lyrics == "No-1-1!!!F") && format_name == "flac" {
             let _output = Command::new("metaflac")
                 .arg("--set-tag=lyrics=".to_owned() + &lyrics)
                 .arg(music_file)
                 .output();
             println!("{:?}", _output);
             let _ = fs::remove_file(&lyrics_file);
-        };
+        } else if !(lyrics == "No-1-1!!!F") && format_name == "mp3" {
+            todo!()
+        }
     }
 }
 
