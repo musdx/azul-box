@@ -3,7 +3,7 @@
 
 ## Feature
 
-- Download music from link with metadata/cover embedded
+- Download music from link with metadata/cover embedded with synced lyric(flac only)
 - Download Video from link with highest quality with some metadata embeded
 - Download Pin from pinterest without account
 - Convert Images formats powered by ffmpeg

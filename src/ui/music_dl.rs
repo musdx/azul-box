@@ -244,6 +244,7 @@ async fn download(
         format_dl(link, directory, "wav", lyrics, frags, lang_code).await;
     }
 }
+
 async fn format_dl(
     link: String,
     directory: String,
@@ -252,78 +253,45 @@ async fn format_dl(
     frags: i8,
     lang_code: String,
 ) {
-    let n = frags.to_string().to_owned();
+    let n = frags.to_string();
     println!("{n}");
-    if lyrics && lang_code == "en" {
-        let output = Command::new("yt-dlp")
-            .arg("--concurrent-fragments")
-            .arg(n)
-            .arg("-i")
-            .arg("-x")
-            .arg("--audio-quality")
-            .arg("0")
-            .arg("--audio-format")
-            .arg(&format_name)
-            .arg("--write-subs")
+
+    let mut yt = Command::new("yt-dlp");
+    yt.arg("--concurrent-fragments")
+        .arg(&n)
+        .arg("-i")
+        .arg("-x")
+        .arg("--audio-quality")
+        .arg("0")
+        .arg("--audio-format")
+        .arg(format_name)
+        .arg("--embed-thumbnail")
+        .arg("--add-metadata")
+        .arg("--metadata-from-title")
+        .arg("%(title)s")
+        .arg("--parse-metadata")
+        .arg("title:%(title)s")
+        .arg("--parse-metadata")
+        .arg("uploader:%(artist)s")
+        .arg("--output")
+        .arg("%(title)s.%(ext)s")
+        .current_dir(&directory);
+
+    if lyrics {
+        yt.arg("--write-subs")
             .arg("--convert-subs")
             .arg("lrc")
-            .arg("--embed-thumbnail")
-            .arg("--add-metadata")
-            .arg("--metadata-from-title")
-            .arg("%(title)s")
-            .arg("--parse-metadata")
-            .arg("title:%(title)s")
-            .arg("--parse-metadata")
-            .arg("uploader:%(artist)s")
-            .arg("--output")
-            .arg("%(title)s.%(ext)s")
             .arg("--exec")
-            .arg("{}")
-            .arg(&link)
-            .current_dir(&directory)
-            .output()
-            .expect("Failed to execute command");
+            .arg("{}");
 
-        let log = String::from_utf8(output.stdout).unwrap_or("Life suck".to_string());
-        println!("{log}");
+        if lang_code != "en" {
+            yt.arg("--sub-langs").arg(&lang_code);
+        }
 
-        let regex = Regex::new(r"\[Exec\] Executing command: '(?:[^']|'')*'").unwrap();
-        let files: Vec<&str> = regex.find_iter(&log).map(|file| file.as_str()).collect();
+        yt.arg(&link);
+        let output = yt.output().expect("Failed to execute command");
 
-        lyrics_work(files, format_name, directory);
-    } else if lyrics && !(lang_code == "en") {
-        let output = Command::new("yt-dlp")
-            .arg("--concurrent-fragments")
-            .arg(n)
-            .arg("-i")
-            .arg("-x")
-            .arg("--audio-quality")
-            .arg("0")
-            .arg("--audio-format")
-            .arg(&format_name)
-            .arg("--write-subs")
-            .arg("--sub-langs")
-            .arg(&lang_code)
-            .arg("--convert-subs")
-            .arg("lrc")
-            .arg("--embed-thumbnail")
-            .arg("--add-metadata")
-            .arg("--metadata-from-title")
-            .arg("%(title)s")
-            .arg("--parse-metadata")
-            .arg("title:%(title)s")
-            .arg("--parse-metadata")
-            .arg("uploader:%(artist)s")
-            .arg("--output")
-            .arg("%(title)s.%(ext)s")
-            .arg("--exec")
-            .arg("{}")
-            .arg(&link)
-            .current_dir(&directory)
-            .output()
-            .expect("Failed to execute command");
-
-        let log = String::from_utf8(output.stdout).unwrap_or("Life suck".to_string());
+        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
         println!("{log}");
 
         let regex = Regex::new(r"\[Exec\] Executing command: '(?:[^']|'')*'").unwrap();
@@ -331,31 +299,9 @@ async fn format_dl(
 
         lyrics_work(files, format_name, directory);
     } else {
-        let output = Command::new("yt-dlp")
-            .arg("--concurrent-fragments")
-            .arg(n)
-            .arg("-i")
-            .arg("-x")
-            .arg("--audio-quality")
-            .arg("0")
-            .arg("--audio-format")
-            .arg(format_name)
-            .arg("--embed-thumbnail")
-            .arg("--add-metadata")
-            .arg("--metadata-from-title")
-            .arg("%(title)s")
-            .arg("--parse-metadata")
-            .arg("title:%(title)s")
-            .arg("--parse-metadata")
-            .arg("uploader:%(artist)s")
-            .arg("--output")
-            .arg("%(title)s.%(ext)s")
-            .arg(link)
-            .current_dir(directory)
-            .output()
-            .expect("Failed to execute command");
-
-        println!("{:?}", output)
+        yt.arg(&link);
+        let output = yt.output().expect("Failed to execute command");
+        println!("{:?}", output);
     }
 }
 
