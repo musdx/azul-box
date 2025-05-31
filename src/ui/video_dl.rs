@@ -1,8 +1,8 @@
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::process::Command;
 
 pub struct VideoDownload {
     pub link: String,
@@ -121,50 +121,26 @@ impl VideoDownload {
 }
 
 async fn download(link: String, directory: String, format: i8, frag: i8) {
+    let n = frag.to_string().to_owned();
+
+    let mut yt = Command::new("yt-dlp");
+    yt.arg("--concurrent-fragments")
+        .arg(n)
+        .arg("--embed-thumbnail")
+        .arg("--embed-subs")
+        .arg("--embed-metadata")
+        .current_dir(directory);
+
     if format == 1 {
-        mkv_dl(link, directory, frag).await;
+        yt.arg("-f").arg("bestvideo+bestaudio");
+
+        let output = yt.arg(link).output();
+        println!("{:?}", output);
     } else if format == 2 {
-        mp4_dl(link, directory, frag).await;
+        yt.arg("-f")
+            .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
+
+        let output = yt.arg(link).output();
+        println!("{:?}", output);
     }
-}
-async fn mkv_dl(link: String, directory: String, frag: i8) {
-    let n = frag.to_string().to_owned();
-    println!("{n}");
-    let output = Command::new("yt-dlp")
-        .arg("--concurrent-fragments")
-        .arg(n)
-        .arg("-f")
-        .arg("bestvideo+bestaudio")
-        .arg("--embed-thumbnail")
-        .arg("--embed-subs")
-        .arg("--embed-metadata")
-        .arg(link)
-        .current_dir(directory)
-        .output()
-        .await
-        .expect("Failed to execute command");
-
-    println!("{:?}", output);
-    println!("best");
-}
-
-async fn mp4_dl(link: String, directory: String, frag: i8) {
-    let n = frag.to_string().to_owned();
-    println!("{n}");
-    let output = Command::new("yt-dlp")
-        .arg("--concurrent-fragments")
-        .arg(n)
-        .arg("-f")
-        .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best")
-        .arg("--embed-thumbnail")
-        .arg("--embed-subs")
-        .arg("--embed-metadata")
-        .arg(link)
-        .current_dir(directory)
-        .output()
-        .await
-        .expect("Failed to execute command");
-
-    println!("{:?}", output);
-    println!("mp4");
 }
