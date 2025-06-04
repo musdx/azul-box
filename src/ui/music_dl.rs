@@ -301,7 +301,8 @@ async fn format_dl(
     } else {
         yt.arg(&link);
         let output = yt.output().expect("Failed to execute command");
-        println!("{:?}", output);
+        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+        println!("{log}");
     }
 }
 
@@ -329,8 +330,10 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
             let _output = Command::new("metaflac")
                 .arg("--set-tag=lyrics=".to_owned() + &lyrics)
                 .arg(music_file)
-                .output();
-            println!("{:?}", _output);
+                .output()
+                .expect("This Should Not Be IT");
+            let log = String::from_utf8(_output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+            println!("{log}");
             let _ = fs::remove_file(&lyrics_file);
         } else if !(lyrics == "No-1-1!!!F") && format_name == "mp3" {
             todo!()

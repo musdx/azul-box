@@ -5,10 +5,10 @@ use std::error::Error;
 use std::fs::File;
 use std::io::copy;
 use std::path::Path;
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio;
-use tokio::process::Command;
 use ureq::get;
 
 pub struct PinterstDownload {
@@ -106,8 +106,10 @@ async fn download(link: String, directory: String, videoorimg: bool) {
             .arg(&link)
             .current_dir(&directory)
             .output()
-            .await;
-        println!("{:?}", output)
+            .expect("Something");
+
+        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+        println!("{log}");
     } else if !videoorimg {
         let _ = pin_pic_dl(&link, &directory);
     }

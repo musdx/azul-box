@@ -134,13 +134,15 @@ async fn download(link: String, directory: String, format: i8, frag: i8) {
     if format == 1 {
         yt.arg("-f").arg("bestvideo+bestaudio");
 
-        let output = yt.arg(link).output();
-        println!("{:?}", output);
+        let output = yt.arg(link).output().expect("Pls some thing");
+        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+        println!("{log}");
     } else if format == 2 {
         yt.arg("-f")
             .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
 
-        let output = yt.arg(link).output();
-        println!("{:?}", output);
+        let output = yt.arg(link).output().expect("Pls some thing");
+        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+        println!("{log}");
     }
 }

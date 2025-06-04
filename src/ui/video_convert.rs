@@ -1,8 +1,8 @@
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::process::Command;
 
 pub struct VideoConvert {
     pub out_directory: String,
@@ -167,8 +167,8 @@ async fn download(input: String, directory: String, format_out: String) {
         .arg(format!("{}.{}", filename, format_out))
         .current_dir(directory)
         .output()
-        .await
         .expect("Failed to execute command");
 
-    println!("{:?}", output);
+    let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+    println!("{log}");
 }
