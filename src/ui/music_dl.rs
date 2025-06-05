@@ -279,6 +279,7 @@ async fn format_dl(
 
     if lyrics {
         yt.arg("--write-subs")
+            .arg("--write-auto-subs")
             .arg("--convert-subs")
             .arg("lrc")
             .arg("--exec")
