@@ -4,6 +4,8 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use crate::ui::shares::notify::{button_sound, done_sound};
+
 pub struct VideoConvert {
     pub out_directory: String,
     pub status_complete: Arc<AtomicBool>,
@@ -139,20 +141,24 @@ impl VideoConvert {
             };
 
             if ui.button("Convert").clicked() {
-                self.reset_download_status();
-                self.start_download_status();
+                button_sound();
+                if !self.status_pending.load(Ordering::Relaxed) {
+                    self.reset_download_status();
+                    self.start_download_status();
 
-                let input = self.input_file.clone();
-                let directory = self.out_directory.clone();
-                let format_out = self.format_out.clone();
-                let complete = self.status_complete.clone();
-                let doing = self.status_pending.clone();
+                    let input = self.input_file.clone();
+                    let directory = self.out_directory.clone();
+                    let format_out = self.format_out.clone();
+                    let complete = self.status_complete.clone();
+                    let doing = self.status_pending.clone();
 
-                tokio::task::spawn(async move {
-                    download(input, directory, format_out).await;
-                    complete.store(true, Ordering::Relaxed);
-                    doing.store(false, Ordering::Relaxed);
-                });
+                    tokio::task::spawn(async move {
+                        download(input, directory, format_out).await;
+                        complete.store(true, Ordering::Relaxed);
+                        doing.store(false, Ordering::Relaxed);
+                        done_sound();
+                    });
+                }
             }
         });
     }

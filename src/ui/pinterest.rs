@@ -11,6 +11,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tokio;
 use ureq::get;
 
+use crate::ui::shares::notify::{button_sound, done_sound};
+
 pub struct PinterstDownload {
     pub link: String,
     pub out_directory: String,
@@ -81,20 +83,24 @@ impl PinterstDownload {
             };
 
             if ui.button("Download").clicked() {
-                self.reset_download_status();
-                self.start_download_status();
+                button_sound();
+                if !self.status_pending.load(Ordering::Relaxed) {
+                    self.reset_download_status();
+                    self.start_download_status();
 
-                let link = self.link.clone();
-                let directory = self.out_directory.clone();
-                let complete = self.status_complete.clone();
-                let doing = self.status_pending.clone();
-                let videoornot = self.imgoranime.clone();
+                    let link = self.link.clone();
+                    let directory = self.out_directory.clone();
+                    let complete = self.status_complete.clone();
+                    let doing = self.status_pending.clone();
+                    let videoornot = self.imgoranime.clone();
 
-                tokio::task::spawn(async move {
-                    download(link, directory, videoornot).await;
-                    complete.store(true, Ordering::Relaxed);
-                    doing.store(false, Ordering::Relaxed);
-                });
+                    tokio::task::spawn(async move {
+                        download(link, directory, videoornot).await;
+                        complete.store(true, Ordering::Relaxed);
+                        doing.store(false, Ordering::Relaxed);
+                        done_sound();
+                    });
+                }
             }
         });
     }

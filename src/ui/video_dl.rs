@@ -4,6 +4,8 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use crate::ui::shares::notify::{button_sound, done_sound};
+
 pub struct VideoDownload {
     pub link: String,
     pub out_directory: String,
@@ -100,21 +102,25 @@ impl VideoDownload {
             };
 
             if ui.button("Download").clicked() {
-                self.reset_download_status();
-                self.start_download_status();
+                button_sound();
+                if !self.status_pending.load(Ordering::Relaxed) {
+                    self.reset_download_status();
+                    self.start_download_status();
 
-                let link = self.link.clone();
-                let directory = self.out_directory.clone();
-                let format = self.format.clone();
-                let complete = self.status_complete.clone();
-                let doing = self.status_pending.clone();
-                let frags = self.frag.clone();
+                    let link = self.link.clone();
+                    let directory = self.out_directory.clone();
+                    let format = self.format.clone();
+                    let complete = self.status_complete.clone();
+                    let doing = self.status_pending.clone();
+                    let frags = self.frag.clone();
 
-                tokio::task::spawn(async move {
-                    download(link, directory, format, frags).await;
-                    complete.store(true, Ordering::Relaxed);
-                    doing.store(false, Ordering::Relaxed);
-                });
+                    tokio::task::spawn(async move {
+                        download(link, directory, format, frags).await;
+                        complete.store(true, Ordering::Relaxed);
+                        doing.store(false, Ordering::Relaxed);
+                        done_sound();
+                    });
+                }
             }
         });
     }

@@ -1,3 +1,4 @@
+use crate::ui::shares::notify::{button_sound, done_sound};
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use regex::Regex;
@@ -202,23 +203,27 @@ impl MusicDownload {
             };
 
             if ui.button("Download").clicked() {
-                self.reset_download_status();
-                self.start_download_status();
+                button_sound();
+                if !self.status_pending.load(Ordering::Relaxed) {
+                    self.reset_download_status();
+                    self.start_download_status();
 
-                let link = self.link.clone();
-                let directory = self.out_directory.clone();
-                let format = self.format.clone();
-                let complete = self.status_complete.clone();
-                let doing = self.status_pending.clone();
-                let lyrics = self.lyrics.clone();
-                let frags = self.frag.clone();
-                let lang_code = self.sub_lang.clone();
+                    let link = self.link.clone();
+                    let directory = self.out_directory.clone();
+                    let format = self.format.clone();
+                    let complete = self.status_complete.clone();
+                    let doing = self.status_pending.clone();
+                    let lyrics = self.lyrics.clone();
+                    let frags = self.frag.clone();
+                    let lang_code = self.sub_lang.clone();
 
-                tokio::task::spawn(async move {
-                    download(link, directory, format, lyrics, frags, lang_code).await;
-                    complete.store(true, Ordering::Relaxed);
-                    doing.store(false, Ordering::Relaxed);
-                });
+                    tokio::task::spawn(async move {
+                        download(link, directory, format, lyrics, frags, lang_code).await;
+                        complete.store(true, Ordering::Relaxed);
+                        doing.store(false, Ordering::Relaxed);
+                        done_sound();
+                    });
+                }
             }
         });
     }
