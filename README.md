@@ -16,6 +16,7 @@ The features will be really random because this is a software I made to randomly
 
 ## Dependencies
 
+- [rustup](https://rustup.rs/)
 - ffmpeg & ffprobe
 - yt-dlp
 - mutagen
@@ -23,17 +24,23 @@ The features will be really random because this is a software I made to randomly
 
 ### Archlinux:
 
+Install [rustup](https://rustup.rs/)
+
 ```
 sudo pacman -S ffmpeg yt-dlp python-mutagen flac
 ```
 
 ### Linuxmint:
 
+Install [rustup](https://rustup.rs/)
+
 ```
 sudo apt install ffmpeg yt-dlp python3-mutagen flac
 ```
 
 ### openSUSE Tumbleweed:
+
+Install [rustup](https://rustup.rs/)
 
 You may need to add some extra official opensuse repo.
 
@@ -43,13 +50,13 @@ sudo zypper in yt-dlp python-mutagen flac
 
 ### Fedora(non atomic):
 
+Install [rustup](https://rustup.rs/)
+
 ```
 sudo dnf install ffmpeg-free yt-dlp python3-mutagen flac
 ```
 
 ## Installation
-
-You will need to have [rustup](https://rustup.rs/) already installed.
 
 Use this follow command to build then install the app. You will still need to install dependencies before run the install script.
 
@@ -59,6 +66,14 @@ git clone https://github.com/musdx/azul-box
 cd azul-box
 sudo chmod +x install.sh
 ./install.sh
+```
+
+## Uninstallation
+
+```
+sudo rm -r /opt/azul_box/
+sudo rm /usr/share/icons/azul_box.png
+sudo rm ~/.local/share/applications/azul_box.desktop
 ```
 
 ## Showcase
