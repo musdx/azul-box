@@ -83,4 +83,4 @@ sudo rm ~/.local/share/applications/azul_box.desktop
 <img src="./assets/pic2.png" width="450"></img>
 </div>
 
-[azul-0.1.0.webm](https://github.com/user-attachments/assets/aa9c66fa-2fcf-4e7f-a454-e2b73fdf8f19)
+[azul-0.1.6.webm](https://github.com/user-attachments/assets/e4cb8937-1f90-40c2-8682-3d0c198e23b0)
