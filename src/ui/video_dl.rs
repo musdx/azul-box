@@ -4,7 +4,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::ui::shares::notify::{button_sound, done_sound};
+use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
 
 pub struct VideoDownload {
     pub link: String,
@@ -151,4 +151,5 @@ async fn download(link: String, directory: String, format: i8, frag: i8) {
         let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
         println!("{log}");
     }
+    let _ = notification_done("video downloader");
 }

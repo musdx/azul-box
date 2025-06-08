@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use rodio::{Decoder, OutputStream, Sink};
 
 pub fn done_sound() {
@@ -15,4 +17,13 @@ pub fn button_sound() {
     let source = Decoder::new(std::io::Cursor::new(source)).unwrap();
     sink.append(source);
     sink.sleep_until_end();
+}
+use notify_rust::Notification;
+pub fn notification_done(info: &str) -> Result<(), Box<dyn Error>> {
+    Notification::new()
+        .summary("Azul Box")
+        .body(format!("Your {} is done!", info).as_str())
+        .icon("azul_box")
+        .show()?;
+    Ok(())
 }

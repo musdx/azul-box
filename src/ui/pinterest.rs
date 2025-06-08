@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tokio;
 use ureq::get;
 
-use crate::ui::shares::notify::{button_sound, done_sound};
+use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
 
 pub struct PinterstDownload {
     pub link: String,
@@ -150,5 +150,6 @@ fn pin_pic_dl(link: &String, directory: &String) -> Result<(), Box<dyn Error>> {
     } else {
         println!("No images found in the document.");
     }
+    let _ = notification_done("pinterest downloader");
     Ok(())
 }

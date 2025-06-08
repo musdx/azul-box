@@ -1,4 +1,4 @@
-use crate::ui::shares::notify::{button_sound, done_sound};
+use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use std::process::Command;
@@ -169,4 +169,5 @@ async fn download(input: String, directory: String, format_out: String) {
 
     let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
     println!("{log}");
+    let _ = notification_done("image converter");
 }
