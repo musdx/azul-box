@@ -42,7 +42,7 @@ impl ImgConvert {
         if self.format_out == name && self.format_in != name {
             if ui
                 .add(egui::Button::new(
-                    egui::RichText::new(name).color(Color32::LIGHT_GREEN),
+                    egui::RichText::new(name).color(Color32::LIGHT_BLUE),
                 ))
                 .clicked()
             {
