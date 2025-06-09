@@ -2,15 +2,14 @@ use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use std::process::Command;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicI8, Ordering};
 
-use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
+use crate::ui::shares::notify::{button_sound, done_sound, notification_done, notification_fail};
 
 pub struct VideoDownload {
     pub link: String,
     pub out_directory: String,
-    pub status_complete: Arc<AtomicBool>,
-    pub status_pending: Arc<AtomicBool>,
+    pub status: Arc<AtomicI8>,
     pub format: i8,
     pub frag: i8,
 }
@@ -23,8 +22,7 @@ impl Default for VideoDownload {
         Self {
             link: String::new(),
             out_directory: default_directory,
-            status_complete: Arc::new(AtomicBool::new(false)),
-            status_pending: Arc::new(AtomicBool::new(false)),
+            status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pensing / 2 = Done / 3 Fail
             format: 1,
             frag: 1,
         }
@@ -32,12 +30,8 @@ impl Default for VideoDownload {
 }
 
 impl VideoDownload {
-    fn reset_download_status(&mut self) {
-        self.status_complete.store(false, Ordering::Relaxed);
-        self.status_pending.store(false, Ordering::Relaxed);
-    }
     fn start_download_status(&mut self) {
-        self.status_pending.store(true, Ordering::Relaxed);
+        self.status.store(1, Ordering::Relaxed);
     }
     fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
         if self.format == numbername {
@@ -70,10 +64,12 @@ impl VideoDownload {
                 ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"))
             });
             ui.label("Status: ");
-            if self.status_complete.load(Ordering::Relaxed) {
-                ui.colored_label(Color32::GREEN, "Done!");
-            } else if self.status_pending.load(Ordering::Relaxed) {
+            if self.status.load(Ordering::Relaxed) == 1 {
                 ui.spinner();
+            } else if self.status.load(Ordering::Relaxed) == 2 {
+                ui.colored_label(Color32::LIGHT_GREEN, "Done!");
+            } else if self.status.load(Ordering::Relaxed) == 3 {
+                ui.colored_label(Color32::LIGHT_RED, "Fail!");
             }
         });
         ui.separator();
@@ -103,21 +99,18 @@ impl VideoDownload {
 
             if ui.button("Download").clicked() {
                 button_sound();
-                if !self.status_pending.load(Ordering::Relaxed) {
-                    self.reset_download_status();
+                if !(self.status.load(Ordering::Relaxed) == 1) {
                     self.start_download_status();
 
                     let link = self.link.clone();
                     let directory = self.out_directory.clone();
                     let format = self.format.clone();
-                    let complete = self.status_complete.clone();
-                    let doing = self.status_pending.clone();
                     let frags = self.frag.clone();
+                    let progress = self.status.clone();
 
                     tokio::task::spawn(async move {
-                        download(link, directory, format, frags).await;
-                        complete.store(true, Ordering::Relaxed);
-                        doing.store(false, Ordering::Relaxed);
+                        let status = download(link, directory, format, frags).await;
+                        progress.store(status, Ordering::Relaxed);
                         done_sound();
                     });
                 }
@@ -126,7 +119,7 @@ impl VideoDownload {
     }
 }
 
-async fn download(link: String, directory: String, format: i8, frag: i8) {
+async fn download(link: String, directory: String, format: i8, frag: i8) -> i8 {
     let n = frag.to_string().to_owned();
 
     let mut yt = Command::new("yt-dlp");
@@ -139,17 +132,24 @@ async fn download(link: String, directory: String, format: i8, frag: i8) {
 
     if format == 1 {
         yt.arg("-f").arg("bestvideo+bestaudio");
-
-        let output = yt.arg(link).output().expect("Pls some thing");
-        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
-        println!("{log}");
     } else if format == 2 {
         yt.arg("-f")
             .arg("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
-
-        let output = yt.arg(link).output().expect("Pls some thing");
-        let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
-        println!("{log}");
     }
-    let _ = notification_done("video downloader");
+    let output = yt.arg(link).output().expect("Pls some thing");
+    let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
+    println!("{log}");
+
+    let status: i8 = if log.contains("[EmbedThumbnail]") {
+        2
+    } else {
+        3
+    };
+
+    if status == 2 {
+        let _ = notification_done("video downloader");
+    } else {
+        let _ = notification_fail("video downloader");
+    }
+    status
 }

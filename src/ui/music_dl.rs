@@ -1,4 +1,6 @@
-use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
+use crate::ui::shares::notify::{
+    button_sound, done_sound, fail_sound, notification_done, notification_fail,
+};
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use regex::Regex;
@@ -6,13 +8,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicI8, Ordering};
 
 pub struct MusicDownload {
     pub link: String,
     pub out_directory: String,
-    pub status_complete: Arc<AtomicBool>,
-    pub status_pending: Arc<AtomicBool>,
+    pub status: Arc<AtomicI8>,
     pub format: i8,
     pub lyrics: bool,
     pub frag: i8,
@@ -27,8 +28,7 @@ impl Default for MusicDownload {
         Self {
             link: String::new(),
             out_directory: default_directory,
-            status_complete: Arc::new(AtomicBool::new(false)),
-            status_pending: Arc::new(AtomicBool::new(false)),
+            status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pensing / 2 = Done / 3 Fail
             format: 2,
             lyrics: false,
             frag: 1,
@@ -38,12 +38,8 @@ impl Default for MusicDownload {
 }
 
 impl MusicDownload {
-    fn reset_download_status(&mut self) {
-        self.status_complete.store(false, Ordering::Relaxed);
-        self.status_pending.store(false, Ordering::Relaxed);
-    }
     fn start_download_status(&mut self) {
-        self.status_pending.store(true, Ordering::Relaxed);
+        self.status.store(1, Ordering::Relaxed);
     }
     fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
         if self.format == numbername {
@@ -171,10 +167,12 @@ impl MusicDownload {
                 }
             });
             ui.label("Status: ");
-            if self.status_complete.load(Ordering::Relaxed) {
-                ui.colored_label(Color32::GREEN, "Done!");
-            } else if self.status_pending.load(Ordering::Relaxed) {
+            if self.status.load(Ordering::Relaxed) == 1 {
                 ui.spinner();
+            } else if self.status.load(Ordering::Relaxed) == 2 {
+                ui.colored_label(Color32::LIGHT_GREEN, "Done!");
+            } else if self.status.load(Ordering::Relaxed) == 3 {
+                ui.colored_label(Color32::LIGHT_RED, "Fail!");
             }
         });
         ui.separator();
@@ -204,24 +202,26 @@ impl MusicDownload {
 
             if ui.button("Download").clicked() {
                 button_sound();
-                if !self.status_pending.load(Ordering::Relaxed) {
-                    self.reset_download_status();
+                if !(self.status.load(Ordering::Relaxed) == 1) {
                     self.start_download_status();
 
                     let link = self.link.clone();
                     let directory = self.out_directory.clone();
                     let format = self.format.clone();
-                    let complete = self.status_complete.clone();
-                    let doing = self.status_pending.clone();
+                    let progress = self.status.clone();
                     let lyrics = self.lyrics.clone();
                     let frags = self.frag.clone();
                     let lang_code = self.sub_lang.clone();
 
                     tokio::task::spawn(async move {
-                        download(link, directory, format, lyrics, frags, lang_code).await;
-                        complete.store(true, Ordering::Relaxed);
-                        doing.store(false, Ordering::Relaxed);
-                        done_sound();
+                        let status =
+                            download(link, directory, format, lyrics, frags, lang_code).await;
+                        progress.store(status, Ordering::Relaxed);
+                        if status == 2 {
+                            done_sound();
+                        } else {
+                            fail_sound();
+                        }
                     });
                 }
             }
@@ -236,18 +236,21 @@ async fn download(
     lyrics: bool,
     frags: i8,
     lang_code: String,
-) {
-    if format == 1 {
-        format_dl(link, directory, "opus", lyrics, frags, lang_code).await;
+) -> i8 {
+    let status = if format == 1 {
+        format_dl(link, directory, "opus", lyrics, frags, lang_code).await
     } else if format == 2 {
-        format_dl(link, directory, "flac", lyrics, frags, lang_code).await;
+        format_dl(link, directory, "flac", lyrics, frags, lang_code).await
     } else if format == 3 {
-        format_dl(link, directory, "mp3", lyrics, frags, lang_code).await;
+        format_dl(link, directory, "mp3", lyrics, frags, lang_code).await
     } else if format == 4 {
-        format_dl(link, directory, "m4a", lyrics, frags, lang_code).await;
+        format_dl(link, directory, "m4a", lyrics, frags, lang_code).await
     } else if format == 5 {
-        format_dl(link, directory, "wav", lyrics, frags, lang_code).await;
-    }
+        format_dl(link, directory, "wav", lyrics, frags, lang_code).await
+    } else {
+        3
+    };
+    status
 }
 
 async fn format_dl(
@@ -257,7 +260,7 @@ async fn format_dl(
     lyrics: bool,
     frags: i8,
     lang_code: String,
-) {
+) -> i8 {
     let n = frags.to_string();
     println!("{n}");
 
@@ -282,6 +285,7 @@ async fn format_dl(
         .arg("%(title)s.%(ext)s")
         .current_dir(&directory);
 
+    let status: i8;
     if lyrics {
         yt.arg("--write-subs")
             .arg("--write-auto-subs")
@@ -304,13 +308,29 @@ async fn format_dl(
         let files: Vec<&str> = regex.find_iter(&log).map(|file| file.as_str()).collect();
 
         lyrics_work(files, format_name, directory);
+        status = if log.contains("[EmbedThumbnail]") {
+            2
+        } else {
+            3
+        };
     } else {
         yt.arg(&link);
         let output = yt.output().expect("Failed to execute command");
         let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
         println!("{log}");
+        status = if log.contains("[EmbedThumbnail]") {
+            2
+        } else {
+            3
+        };
     }
-    let _ = notification_done("music downloader");
+    if status == 2 {
+        let _ = notification_done("music downloader");
+    } else {
+        let _ = notification_fail("music downloader");
+    }
+
+    status
 }
 
 fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
