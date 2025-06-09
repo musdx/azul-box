@@ -1,6 +1,6 @@
 [package]
 name = "azul-box"
-version = "0.1.65"
+version = "0.1.67"
 edition = "2024"
 
 [dependencies]

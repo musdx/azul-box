@@ -171,9 +171,9 @@ async fn download(input: String, directory: String, format_out: String) -> i8 {
     println!("{status}");
     let status: i8 = if status.success() { 2 } else { 3 };
     if status == 2 {
-        let _ = notification_done("video converter");
+        let _ = notification_done("image converter");
     } else {
-        let _ = notification_fail("video converter");
+        let _ = notification_fail("image converter");
     }
     status
 }
