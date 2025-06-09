@@ -1,14 +1,15 @@
-use crate::ui::shares::notify::{button_sound, done_sound, notification_done};
+use crate::ui::shares::notify::{
+    button_sound, done_sound, fail_sound, notification_done, notification_fail,
+};
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use std::process::Command;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicI8, Ordering};
 
 pub struct ImgConvert {
     pub out_directory: String,
-    pub status_complete: Arc<AtomicBool>,
-    pub status_pending: Arc<AtomicBool>,
+    pub status: Arc<AtomicI8>,
     pub format_in: String,
     pub format_out: String,
     pub input_file: String,
@@ -22,8 +23,7 @@ impl Default for ImgConvert {
         Self {
             input_file: String::new(),
             out_directory: default_directory,
-            status_complete: Arc::new(AtomicBool::new(false)),
-            status_pending: Arc::new(AtomicBool::new(false)),
+            status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
             format_in: String::new(),
             format_out: String::from("None"),
         }
@@ -31,12 +31,8 @@ impl Default for ImgConvert {
 }
 
 impl ImgConvert {
-    fn reset_download_status(&mut self) {
-        self.status_complete.store(false, Ordering::Relaxed);
-        self.status_pending.store(false, Ordering::Relaxed);
-    }
     fn start_download_status(&mut self) {
-        self.status_pending.store(true, Ordering::Relaxed);
+        self.status.store(1, Ordering::Relaxed);
     }
     fn format_out_button(&mut self, ui: &mut egui::Ui, name: &str) {
         if self.format_out == name && self.format_in != name {
@@ -75,10 +71,12 @@ impl ImgConvert {
             ui.separator();
             ui.add_space(10.0);
             ui.label("Status: ");
-            if self.status_complete.load(Ordering::Relaxed) {
-                ui.colored_label(Color32::GREEN, "Done!");
-            } else if self.status_pending.load(Ordering::Relaxed) {
+            if self.status.load(Ordering::Relaxed) == 1 {
                 ui.spinner();
+            } else if self.status.load(Ordering::Relaxed) == 2 {
+                ui.colored_label(Color32::LIGHT_GREEN, "Done!");
+            } else if self.status.load(Ordering::Relaxed) == 3 {
+                ui.colored_label(Color32::LIGHT_RED, "Fail!");
             }
         });
         ui.separator();
@@ -132,21 +130,22 @@ impl ImgConvert {
 
             if ui.button("Convert").clicked() {
                 button_sound();
-                if !self.status_pending.load(Ordering::Relaxed) {
-                    self.reset_download_status();
+                if !(self.status.load(Ordering::Relaxed) == 1) {
                     self.start_download_status();
 
                     let input = self.input_file.clone();
                     let directory = self.out_directory.clone();
                     let format_out = self.format_out.clone();
-                    let complete = self.status_complete.clone();
-                    let doing = self.status_pending.clone();
+                    let progress = self.status.clone();
 
                     tokio::task::spawn(async move {
-                        download(input, directory, format_out).await;
-                        complete.store(true, Ordering::Relaxed);
-                        doing.store(false, Ordering::Relaxed);
-                        done_sound();
+                        let status = download(input, directory, format_out).await;
+                        progress.store(status, Ordering::Relaxed);
+                        if status == 2 {
+                            done_sound();
+                        } else {
+                            fail_sound();
+                        }
                     });
                 }
             }
@@ -154,7 +153,7 @@ impl ImgConvert {
     }
 }
 
-async fn download(input: String, directory: String, format_out: String) {
+async fn download(input: String, directory: String, format_out: String) -> i8 {
     let filename = input.split("/").last().unwrap().split(".").nth(0).unwrap();
 
     let output = Command::new("ffmpeg")
@@ -167,7 +166,14 @@ async fn download(input: String, directory: String, format_out: String) {
         .output()
         .expect("Failed to execute command");
 
-    let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
-    println!("{log}");
-    let _ = notification_done("image converter");
+    let status = output.status;
+
+    println!("{status}");
+    let status: i8 = if status.success() { 2 } else { 3 };
+    if status == 2 {
+        let _ = notification_done("video converter");
+    } else {
+        let _ = notification_fail("video converter");
+    }
+    status
 }

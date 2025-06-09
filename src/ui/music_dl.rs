@@ -28,7 +28,7 @@ impl Default for MusicDownload {
         Self {
             link: String::new(),
             out_directory: default_directory,
-            status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pensing / 2 = Done / 3 Fail
+            status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
             format: 2,
             lyrics: false,
             frag: 1,
