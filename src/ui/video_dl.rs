@@ -4,7 +4,9 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI8, Ordering};
 
-use crate::ui::shares::notify::{button_sound, done_sound, notification_done, notification_fail};
+use crate::ui::shares::notify::{
+    button_sound, done_sound, fail_sound, notification_done, notification_fail,
+};
 
 pub struct VideoDownload {
     pub link: String,
@@ -111,7 +113,11 @@ impl VideoDownload {
                     tokio::task::spawn(async move {
                         let status = download(link, directory, format, frags).await;
                         progress.store(status, Ordering::Relaxed);
-                        done_sound();
+                        if status == 2 {
+                            done_sound();
+                        } else {
+                            fail_sound();
+                        }
                     });
                 }
             }

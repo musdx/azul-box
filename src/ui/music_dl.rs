@@ -63,7 +63,7 @@ impl MusicDownload {
         if self.sub_lang == code {
             if ui
                 .add(egui::Button::new(
-                    egui::RichText::new(&lang).color(Color32::LIGHT_GREEN),
+                    egui::RichText::new(&lang).color(Color32::LIGHT_BLUE),
                 ))
                 .clicked()
             {
@@ -149,7 +149,7 @@ impl MusicDownload {
                 if self.lyrics && !(self.format == 5) {
                     if ui
                         .add(egui::Button::new(
-                            egui::RichText::new("Lyrics").color(Color32::LIGHT_GREEN),
+                            egui::RichText::new("Lyrics").color(Color32::LIGHT_BLUE),
                         ))
                         .clicked()
                     {
