@@ -30,7 +30,7 @@ impl Default for MusicDownload {
             out_directory: default_directory,
             status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
             format: 1,
-            lyrics: false,
+            lyrics: true,
             frag: 1,
             sub_lang: "en".to_string(),
         }
