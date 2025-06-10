@@ -29,7 +29,7 @@ impl Default for MusicDownload {
             link: String::new(),
             out_directory: default_directory,
             status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
-            format: 2,
+            format: 1,
             lyrics: false,
             frag: 1,
             sub_lang: "en".to_string(),
@@ -134,7 +134,7 @@ impl MusicDownload {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        if !(self.format == 2) {
+        if self.format == 5 {
             self.lyrics = false;
         }
         ui.horizontal(|ui| {
@@ -146,7 +146,7 @@ impl MusicDownload {
                     self.format_button(ui, "M4A", 4);
                     self.format_button(ui, "WAV", 5);
                 });
-                if self.lyrics && self.format == 2 {
+                if self.lyrics && !(self.format == 5) {
                     if ui
                         .add(egui::Button::new(
                             egui::RichText::new("Lyrics").color(Color32::LIGHT_GREEN),
@@ -156,7 +156,7 @@ impl MusicDownload {
                         self.lyrics = false;
                     };
                     self.lang_choice(ui);
-                } else if self.format == 2 {
+                } else if !(self.format == 5) {
                     if ui.button("Lyrics").clicked() {
                         self.lyrics = true;
                     };
@@ -353,14 +353,41 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
                 "No-1-1!!!F".to_string()
             }
         };
-        if !(lyrics == "No-1-1!!!F") && format_name == "flac" {
-            let _output = Command::new("metaflac")
-                .arg("--set-tag=lyrics=".to_owned() + &lyrics)
-                .arg(music_file)
-                .output()
-                .expect("This Should Not Be IT");
-            let log = String::from_utf8(_output.stdout).unwrap_or_else(|_| "Life suck".to_string());
-            println!("{log}");
+        if (!(lyrics == "No-1-1!!!F") && format_name == "flac")
+            || (!(lyrics == "No-1-1!!!F") && format_name == "opus")
+            || (!(lyrics == "No-1-1!!!F") && format_name == "mp3")
+            || (!(lyrics == "No-1-1!!!F") && format_name == "m4a")
+        {
+            use lofty::config::WriteOptions;
+            use lofty::prelude::*;
+            use lofty::probe::Probe;
+            use lofty::tag::Tag;
+
+            let mut tagged_file = Probe::open(&music_file)
+                .expect("ERROR: Bad path provided!")
+                .read()
+                .expect("ERROR: Failed to read file!");
+
+            let tag = match tagged_file.primary_tag_mut() {
+                Some(primary_tag) => primary_tag,
+                None => {
+                    if let Some(first_tag) = tagged_file.first_tag_mut() {
+                        first_tag
+                    } else {
+                        let tag_type = tagged_file.primary_tag_type();
+
+                        eprintln!("WARN: No tags found, creating a new tag of type `{tag_type:?}`");
+                        tagged_file.insert_tag(Tag::new(tag_type));
+
+                        tagged_file.primary_tag_mut().unwrap()
+                    }
+                }
+            };
+            tag.insert_text(ItemKey::Lyrics, lyrics);
+            tag.save_to_path(&music_file, WriteOptions::default())
+                .expect("ERROR: Failed to write the tag!");
+
+            println!("INFO: Tag successfully updated!");
             let _ = fs::remove_file(&lyrics_file);
         } else if !(lyrics == "No-1-1!!!F") && format_name == "mp3" {
             todo!()

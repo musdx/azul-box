@@ -3,7 +3,7 @@
 
 ## Feature
 
-- Download music from link with metadata/cover embedded with synced lyric(flac only)
+- Download music from link with metadata/cover embedded with synced lyric(lyric do not work for WAV)
 - Download Video from link with highest quality with some metadata embeded
 - Download Pin from pinterest without account
 - Convert Images formats powered by ffmpeg
@@ -20,14 +20,13 @@ The features will be really random because this is a software I made to randomly
 - ffmpeg & ffprobe
 - yt-dlp
 - mutagen
-- metaflac(from the flac package)
 
 ### Archlinux:
 
 Install [rustup](https://rustup.rs/)
 
 ```
-sudo pacman -S ffmpeg yt-dlp python-mutagen flac
+sudo pacman -S ffmpeg yt-dlp python-mutagen
 ```
 
 ### Linuxmint:
@@ -35,7 +34,7 @@ sudo pacman -S ffmpeg yt-dlp python-mutagen flac
 Install [rustup](https://rustup.rs/)
 
 ```
-sudo apt install ffmpeg yt-dlp python3-mutagen flac
+sudo apt install ffmpeg yt-dlp python3-mutagen
 ```
 
 ### openSUSE Tumbleweed:
@@ -45,7 +44,7 @@ Install [rustup](https://rustup.rs/)
 You may need to add some extra official opensuse repo.
 
 ```
-sudo zypper in yt-dlp python-mutagen flac
+sudo zypper in yt-dlp python-mutagen
 ```
 
 ### Fedora(non atomic):
@@ -53,7 +52,7 @@ sudo zypper in yt-dlp python-mutagen flac
 Install [rustup](https://rustup.rs/)
 
 ```
-sudo dnf install ffmpeg-free yt-dlp python3-mutagen flac
+sudo dnf install ffmpeg-free yt-dlp python3-mutagen
 ```
 
 ## Installation
