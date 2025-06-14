@@ -474,7 +474,6 @@ dependencies = [
  "lofty",
  "native-dialog",
  "notify-rust",
- "regex",
  "rodio",
  "scraper",
  "tokio",
