@@ -3,7 +3,6 @@ use crate::ui::shares::notify::{
 };
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
-use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -18,6 +17,7 @@ pub struct MusicDownload {
     pub lyrics: bool,
     pub frag: i8,
     pub sub_lang: String,
+    pub auto_lyric: bool,
 }
 
 impl Default for MusicDownload {
@@ -33,6 +33,7 @@ impl Default for MusicDownload {
             lyrics: true,
             frag: 1,
             sub_lang: "en".to_string(),
+            auto_lyric: false,
         }
     }
 }
@@ -132,6 +133,22 @@ impl MusicDownload {
             }
         });
     }
+    fn auto_on(&mut self, ui: &mut egui::Ui) {
+        if self.auto_lyric {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new("Auto generated lyrics").color(Color32::LIGHT_BLUE),
+                ))
+                .clicked()
+            {
+                self.auto_lyric = false;
+            }
+        } else {
+            if ui.button("Auto generated lyrics").clicked() {
+                self.auto_lyric = true;
+            }
+        }
+    }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         if self.format == 5 {
@@ -156,6 +173,7 @@ impl MusicDownload {
                         self.lyrics = false;
                     };
                     self.lang_choice(ui);
+                    self.auto_on(ui);
                 } else if !(self.format == 5) {
                     if ui.button("Lyrics").clicked() {
                         self.lyrics = true;
@@ -212,10 +230,11 @@ impl MusicDownload {
                     let lyrics = self.lyrics.clone();
                     let frags = self.frag.clone();
                     let lang_code = self.sub_lang.clone();
+                    let auto = self.auto_lyric.clone();
 
                     tokio::task::spawn(async move {
                         let status =
-                            download(link, directory, format, lyrics, frags, lang_code).await;
+                            download(link, directory, format, lyrics, frags, lang_code, auto).await;
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -236,17 +255,24 @@ async fn download(
     lyrics: bool,
     frags: i8,
     lang_code: String,
+    lyric_auto: bool,
 ) -> i8 {
     let status = if format == 1 {
-        format_dl(link, directory, "opus", lyrics, frags, lang_code).await
+        format_dl(
+            link, directory, "opus", lyrics, frags, lang_code, lyric_auto,
+        )
+        .await
     } else if format == 2 {
-        format_dl(link, directory, "flac", lyrics, frags, lang_code).await
+        format_dl(
+            link, directory, "flac", lyrics, frags, lang_code, lyric_auto,
+        )
+        .await
     } else if format == 3 {
-        format_dl(link, directory, "mp3", lyrics, frags, lang_code).await
+        format_dl(link, directory, "mp3", lyrics, frags, lang_code, lyric_auto).await
     } else if format == 4 {
-        format_dl(link, directory, "m4a", lyrics, frags, lang_code).await
+        format_dl(link, directory, "m4a", lyrics, frags, lang_code, lyric_auto).await
     } else if format == 5 {
-        format_dl(link, directory, "wav", lyrics, frags, lang_code).await
+        format_dl(link, directory, "wav", lyrics, frags, lang_code, lyric_auto).await
     } else {
         3
     };
@@ -260,6 +286,7 @@ async fn format_dl(
     lyrics: bool,
     frags: i8,
     lang_code: String,
+    auto_lyric: bool,
 ) -> i8 {
     let n = frags.to_string();
     println!("{n}");
@@ -287,12 +314,10 @@ async fn format_dl(
 
     let status: i8;
     if lyrics {
-        yt.arg("--write-subs")
-            .arg("--write-auto-subs")
-            .arg("--convert-subs")
-            .arg("lrc")
-            .arg("--exec")
-            .arg("{}");
+        if auto_lyric {
+            yt.arg("--write-auto-subs");
+        }
+        yt.arg("--write-subs").arg("--convert-subs").arg("lrc");
 
         if lang_code != "en" {
             yt.arg("--sub-langs").arg(&lang_code);
@@ -304,8 +329,10 @@ async fn format_dl(
         let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
         println!("{log}");
 
-        let regex = Regex::new(r"\[Exec\] Executing command: '(?:[^']|'')*'").unwrap();
-        let files: Vec<&str> = regex.find_iter(&log).map(|file| file.as_str()).collect();
+        let files: Vec<&str> = log
+            .lines()
+            .filter(|line| line.starts_with("[EmbedThumbnail]"))
+            .collect();
 
         lyrics_work(files, format_name, directory);
         status = if log.contains("[EmbedThumbnail]") {
@@ -334,16 +361,15 @@ async fn format_dl(
 }
 
 fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
-    let regex = Regex::new("'[^']*'").unwrap();
     for i in files.into_iter() {
         println!("i: {i}");
-        let item = regex.find(i).unwrap().as_str().trim();
+        let item = i.split("Adding thumbnail to \"").last().unwrap();
         println!("item: {item}");
-        let extension = format!(".{}", format_name);
-        let filename = &item.split("/").last().unwrap();
-        let filename = filename.split(&extension).nth(0).unwrap();
+        let extension = format!(".{}\"", format_name);
+        let filename = &item.split(&extension).nth(0).unwrap();
         println!("filename: {filename}");
-        let music_file = &item[1..item.len() - 1].to_string();
+        let music_file = format!("{}/{}", &directory, &item[0..item.len() - 1].to_string());
+        println!("music dir:{music_file}");
         let lyrics_file = finder_lyrics(&directory, &filename).unwrap();
         let music_file = Path::new(&music_file);
         let lyrics = match fs::read_to_string(&lyrics_file) {

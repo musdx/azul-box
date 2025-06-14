@@ -116,6 +116,7 @@ async fn download(link: String, directory: String, videoorimg: bool) {
 
         let log = String::from_utf8(output.stdout).unwrap_or_else(|_| "Life suck".to_string());
         println!("{log}");
+        let _ = notification_done("pinterest downloader");
     } else if !videoorimg {
         let _ = pin_pic_dl(&link, &directory);
     }
