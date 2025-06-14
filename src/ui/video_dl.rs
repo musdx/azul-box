@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32};
+use eframe::egui::{self, Button, Color32};
 use native_dialog::DialogBuilder;
 use std::process::Command;
 use std::sync::Arc;
@@ -14,6 +14,8 @@ pub struct VideoDownload {
     pub status: Arc<AtomicI8>,
     pub format: i8,
     pub frag: i8,
+    pub subtitle: bool,
+    pub sub_lang: String,
 }
 
 impl Default for VideoDownload {
@@ -27,6 +29,8 @@ impl Default for VideoDownload {
             status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
             format: 1,
             frag: 1,
+            subtitle: true,
+            sub_lang: "en".to_string(),
         }
     }
 }
@@ -53,6 +57,79 @@ impl VideoDownload {
             };
         }
     }
+    fn sub_button(&mut self, ui: &mut egui::Ui, code: String, lang: String) {
+        if self.sub_lang == code {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new(&lang).color(Color32::LIGHT_BLUE),
+                ))
+                .clicked()
+            {
+                self.sub_lang = code;
+                ui.close_menu();
+            };
+        } else {
+            if ui.button(&lang).clicked() {
+                self.sub_lang = code;
+                ui.close_menu();
+            }
+        }
+    }
+    fn lang_choice(&mut self, ui: &mut egui::Ui) {
+        let language_codes: Vec<&str> = vec![
+            "en", // English
+            "fr", // French
+            "es", // Spanish
+            "zh", // Chinese
+            "de", // German
+            "ja", // Japanese
+            "ar", // Arabic
+            "ru", // Russian
+            "it", // Italian
+            "pt", // Portuguese
+            "nl", // Dutch
+            "sv", // Swedish
+            "no", // Norwegian
+            "fi", // Finnish
+            "da", // Danish
+            "pl", // Polish
+            "cs", // Czech
+            "hu", // Hungarian
+            "ro", // Romanian
+            "tr", // Turkish
+            "vi", // Vietnamese
+            "ko", //Korean
+        ];
+        let languages: Vec<&str> = vec![
+            "English",
+            "French",
+            "Spanish",
+            "Chinese",
+            "German",
+            "Japanese",
+            "Arabic",
+            "Russian",
+            "Italian",
+            "Portuguese",
+            "Dutch",
+            "Swedish",
+            "Norwegian",
+            "Finnish",
+            "Danish",
+            "Polish",
+            "Czech",
+            "Hungarian",
+            "Romanian",
+            "Turkish",
+            "Vietnamese",
+            "Korean",
+        ];
+        ui.menu_button("Languages", |ui| {
+            for (lang, code) in languages.iter().zip(language_codes.iter()) {
+                self.sub_button(ui, code.to_string(), lang.to_string());
+            }
+        });
+    }
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
@@ -60,10 +137,26 @@ impl VideoDownload {
                     self.format_button(ui, "MKV", 1);
                     self.format_button(ui, "MP4", 2);
                 });
+
+                ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
+                if self.subtitle {
+                    if ui
+                        .add(Button::new(
+                            egui::RichText::new("Subtitle").color(Color32::LIGHT_BLUE),
+                        ))
+                        .clicked()
+                    {
+                        self.subtitle = false;
+                    }
+                    self.lang_choice(ui);
+                } else {
+                    if ui.button("Subtitle").clicked() {
+                        self.subtitle = true;
+                    }
+                }
                 if ui.button("Close").clicked() {
                     ui.close_menu();
                 }
-                ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"))
             });
             ui.label("Status: ");
             if self.status.load(Ordering::Relaxed) == 1 {
@@ -109,9 +202,11 @@ impl VideoDownload {
                     let format = self.format.clone();
                     let frags = self.frag.clone();
                     let progress = self.status.clone();
+                    let subtile = self.subtitle.clone();
+                    let lang = self.sub_lang.clone();
 
                     tokio::task::spawn(async move {
-                        let status = download(link, directory, format, frags).await;
+                        let status = download(link, directory, format, frags, subtile, &lang).await;
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -125,16 +220,25 @@ impl VideoDownload {
     }
 }
 
-async fn download(link: String, directory: String, format: i8, frag: i8) -> i8 {
+async fn download(
+    link: String,
+    directory: String,
+    format: i8,
+    frag: i8,
+    sub: bool,
+    lang: &str,
+) -> i8 {
     let n = frag.to_string().to_owned();
 
     let mut yt = Command::new("yt-dlp");
     yt.arg("--concurrent-fragments")
         .arg(n)
         .arg("--embed-thumbnail")
-        .arg("--embed-subs")
         .arg("--embed-metadata")
         .current_dir(directory);
+    if sub {
+        yt.arg("--embed-subs").arg("--sub-lang").arg(lang);
+    }
 
     if format == 1 {
         yt.arg("-f").arg("bestvideo+bestaudio");

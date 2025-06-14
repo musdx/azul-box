@@ -126,7 +126,7 @@ impl MusicDownload {
             "Vietnamese",
             "Korean",
         ];
-        ui.menu_button("Langs", |ui| {
+        ui.menu_button("Languages", |ui| {
             for (lang, code) in languages.iter().zip(language_codes.iter()) {
                 self.sub_button(ui, code.to_string(), lang.to_string());
             }
