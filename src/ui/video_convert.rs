@@ -149,7 +149,7 @@ impl VideoConvert {
                     let progress = self.status.clone();
 
                     tokio::task::spawn(async move {
-                        let status = download(input, directory, format_out).await;
+                        let status = download(input, directory, format_out);
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -163,7 +163,7 @@ impl VideoConvert {
     }
 }
 
-async fn download(input: String, directory: String, format_out: String) -> i8 {
+fn download(input: String, directory: String, format_out: String) -> i8 {
     let filename = input.split("/").last().unwrap().split(".").nth(0).unwrap();
 
     let output = Command::new("ffmpeg")

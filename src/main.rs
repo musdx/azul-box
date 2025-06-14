@@ -2,7 +2,6 @@
 
 mod ui;
 use eframe::egui::{self, global_theme_preference_buttons};
-use tokio;
 
 #[tokio::main]
 async fn main() -> eframe::Result {

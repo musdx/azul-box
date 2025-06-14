@@ -95,7 +95,7 @@ impl PinterstDownload {
                     let videoornot = self.imgoranime.clone();
 
                     tokio::task::spawn(async move {
-                        download(link, directory, videoornot).await;
+                        download(link, directory, videoornot);
                         complete.store(true, Ordering::Relaxed);
                         doing.store(false, Ordering::Relaxed);
                         done_sound();
@@ -106,7 +106,7 @@ impl PinterstDownload {
     }
 }
 
-async fn download(link: String, directory: String, videoorimg: bool) {
+fn download(link: String, directory: String, videoorimg: bool) {
     if videoorimg {
         let output = Command::new("yt-dlp")
             .arg(&link)

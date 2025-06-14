@@ -91,7 +91,7 @@ impl ImgConvert {
                     .set_location(&self.out_directory)
                     .add_filter(
                         "Images",
-                        &[
+                        [
                             "jpg", "jpeg", "png", "bmp", "tif", "tiff", "gif", "webp", "heic",
                             "heif", "cr2", "nef", "dng", "svg", "psd", "avif",
                         ],
@@ -130,7 +130,7 @@ impl ImgConvert {
 
             if ui.button("Convert").clicked() {
                 button_sound();
-                if !(self.status.load(Ordering::Relaxed) == 1) {
+                if self.status.load(Ordering::Relaxed) != 1 {
                     self.start_download_status();
 
                     let input = self.input_file.clone();
@@ -139,7 +139,7 @@ impl ImgConvert {
                     let progress = self.status.clone();
 
                     tokio::task::spawn(async move {
-                        let status = download(input, directory, format_out).await;
+                        let status = download(input, directory, format_out);
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -153,8 +153,8 @@ impl ImgConvert {
     }
 }
 
-async fn download(input: String, directory: String, format_out: String) -> i8 {
-    let filename = input.split("/").last().unwrap().split(".").nth(0).unwrap();
+fn download(input: String, directory: String, format_out: String) -> i8 {
+    let filename = input.split("/").last().unwrap().split(".").next().unwrap();
 
     let output = Command::new("ffmpeg")
         .arg("-i")

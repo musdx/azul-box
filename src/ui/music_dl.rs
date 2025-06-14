@@ -163,7 +163,7 @@ impl MusicDownload {
                     self.format_button(ui, "M4A", 4);
                     self.format_button(ui, "WAV", 5);
                 });
-                if self.lyrics && !(self.format == 5) {
+                if self.lyrics && self.format != 5 {
                     if ui
                         .add(egui::Button::new(
                             egui::RichText::new("Lyrics").color(Color32::LIGHT_BLUE),
@@ -174,7 +174,7 @@ impl MusicDownload {
                     };
                     self.lang_choice(ui);
                     self.auto_on(ui);
-                } else if !(self.format == 5) {
+                } else if self.format != 5 {
                     if ui.button("Lyrics").clicked() {
                         self.lyrics = true;
                     };
@@ -220,21 +220,21 @@ impl MusicDownload {
 
             if ui.button("Download").clicked() {
                 button_sound();
-                if !(self.status.load(Ordering::Relaxed) == 1) {
+                if self.status.load(Ordering::Relaxed) != 1 {
                     self.start_download_status();
 
                     let link = self.link.clone();
                     let directory = self.out_directory.clone();
-                    let format = self.format.clone();
+                    let format = self.format;
                     let progress = self.status.clone();
-                    let lyrics = self.lyrics.clone();
-                    let frags = self.frag.clone();
+                    let lyrics = self.lyrics;
+                    let frags = self.frag;
                     let lang_code = self.sub_lang.clone();
-                    let auto = self.auto_lyric.clone();
+                    let auto = self.auto_lyric;
 
                     tokio::task::spawn(async move {
                         let status =
-                            download(link, directory, format, lyrics, frags, lang_code, auto).await;
+                            download(link, directory, format, lyrics, frags, lang_code, auto);
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -248,7 +248,7 @@ impl MusicDownload {
     }
 }
 
-async fn download(
+fn download(
     link: String,
     directory: String,
     format: i8,
@@ -257,29 +257,26 @@ async fn download(
     lang_code: String,
     lyric_auto: bool,
 ) -> i8 {
-    let status = if format == 1 {
+    if format == 1 {
         format_dl(
             link, directory, "opus", lyrics, frags, lang_code, lyric_auto,
         )
-        .await
     } else if format == 2 {
         format_dl(
             link, directory, "flac", lyrics, frags, lang_code, lyric_auto,
         )
-        .await
     } else if format == 3 {
-        format_dl(link, directory, "mp3", lyrics, frags, lang_code, lyric_auto).await
+        format_dl(link, directory, "mp3", lyrics, frags, lang_code, lyric_auto)
     } else if format == 4 {
-        format_dl(link, directory, "m4a", lyrics, frags, lang_code, lyric_auto).await
+        format_dl(link, directory, "m4a", lyrics, frags, lang_code, lyric_auto)
     } else if format == 5 {
-        format_dl(link, directory, "wav", lyrics, frags, lang_code, lyric_auto).await
+        format_dl(link, directory, "wav", lyrics, frags, lang_code, lyric_auto)
     } else {
         3
-    };
-    status
+    }
 }
 
-async fn format_dl(
+fn format_dl(
     link: String,
     directory: String,
     format_name: &str,
@@ -366,7 +363,7 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
         let item = i.split("Adding thumbnail to \"").last().unwrap();
         println!("item: {item}");
         let extension = format!(".{}\"", format_name);
-        let filename = &item.split(&extension).nth(0).unwrap();
+        let filename = &item.split(&extension).next().unwrap();
         println!("filename: {filename}");
         let music_file = format!("{}/{}", &directory, &item[0..item.len() - 1].to_string());
         println!("music dir:{music_file}");

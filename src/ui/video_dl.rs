@@ -206,7 +206,7 @@ impl VideoDownload {
                     let lang = self.sub_lang.clone();
 
                     tokio::task::spawn(async move {
-                        let status = download(link, directory, format, frags, subtile, &lang).await;
+                        let status = download(link, directory, format, frags, subtile, &lang);
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -220,14 +220,7 @@ impl VideoDownload {
     }
 }
 
-async fn download(
-    link: String,
-    directory: String,
-    format: i8,
-    frag: i8,
-    sub: bool,
-    lang: &str,
-) -> i8 {
+fn download(link: String, directory: String, format: i8, frag: i8, sub: bool, lang: &str) -> i8 {
     let n = frag.to_string().to_owned();
 
     let mut yt = Command::new("yt-dlp");
