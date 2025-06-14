@@ -415,8 +415,6 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
 
             println!("INFO: Tag successfully updated!");
             let _ = fs::remove_file(&lyrics_file);
-        } else if !(lyrics == "No-1-1!!!F") && format_name == "mp3" {
-            todo!()
         }
     }
 }
