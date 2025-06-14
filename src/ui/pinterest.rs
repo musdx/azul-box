@@ -48,7 +48,7 @@ impl PinterstDownload {
         ui.horizontal(|ui| {
             ui.label("Status: ");
             if self.status_complete.load(Ordering::Relaxed) {
-                ui.colored_label(Color32::GREEN, "Done!");
+                ui.colored_label(Color32::LIGHT_GREEN, "Done!");
             } else if self.status_pending.load(Ordering::Relaxed) {
                 ui.spinner();
             }
@@ -92,7 +92,7 @@ impl PinterstDownload {
                     let directory = self.out_directory.clone();
                     let complete = self.status_complete.clone();
                     let doing = self.status_pending.clone();
-                    let videoornot = self.imgoranime.clone();
+                    let videoornot = self.imgoranime;
 
                     tokio::task::spawn(async move {
                         download(link, directory, videoornot);
@@ -141,7 +141,7 @@ fn pin_pic_dl(link: &String, directory: &String) -> Result<(), Box<dyn Error>> {
             let (_, body) = response.into_parts();
 
             let mut file =
-                File::create(Path::new(directory).join(&filename)).expect("Failed to create file");
+                File::create(Path::new(directory).join(filename)).expect("Failed to create file");
             copy(&mut body.into_reader(), &mut file).expect("Failed to save image");
 
             println!("Image downloaded successfully: {}", filename);

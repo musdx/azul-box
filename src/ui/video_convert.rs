@@ -101,7 +101,7 @@ impl VideoConvert {
                     .set_location(&self.out_directory)
                     .add_filter(
                         "Video",
-                        &[
+                        [
                             "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "mpeg", "mpg", "3gp",
                             "ogv", "m4v", "asf", "vob", "ts", "f4v", "dv",
                         ],
@@ -140,7 +140,7 @@ impl VideoConvert {
 
             if ui.button("Convert").clicked() {
                 button_sound();
-                if !(self.status.load(Ordering::Relaxed) == 1) {
+                if self.status.load(Ordering::Relaxed) != 1 {
                     self.start_download_status();
 
                     let input = self.input_file.clone();
@@ -164,7 +164,7 @@ impl VideoConvert {
 }
 
 fn download(input: String, directory: String, format_out: String) -> i8 {
-    let filename = input.split("/").last().unwrap().split(".").nth(0).unwrap();
+    let filename = input.split("/").last().unwrap().split(".").next().unwrap();
 
     let output = Command::new("ffmpeg")
         .arg("-i")

@@ -194,15 +194,15 @@ impl VideoDownload {
 
             if ui.button("Download").clicked() {
                 button_sound();
-                if !(self.status.load(Ordering::Relaxed) == 1) {
+                if self.status.load(Ordering::Relaxed) != 1 {
                     self.start_download_status();
 
                     let link = self.link.clone();
                     let directory = self.out_directory.clone();
-                    let format = self.format.clone();
-                    let frags = self.frag.clone();
+                    let format = self.format;
+                    let frags = self.frag;
                     let progress = self.status.clone();
-                    let subtile = self.subtitle.clone();
+                    let subtile = self.subtitle;
                     let lang = self.sub_lang.clone();
 
                     tokio::task::spawn(async move {
