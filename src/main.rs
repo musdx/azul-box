@@ -67,7 +67,7 @@ impl eframe::App for MyApp {
                 ui.horizontal_wrapped(|ui| {
                     global_theme_preference_buttons(ui);
                     match self.background {
-                        true => {
+                        false => {
                             if ui
                                 .add(
                                     Button::new(
@@ -78,10 +78,10 @@ impl eframe::App for MyApp {
                                 )
                                 .clicked()
                             {
-                                self.background = false;
+                                self.background = true;
                             }
                         }
-                        false => {
+                        true => {
                             if ui
                                 .add(
                                     Button::new(RichText::new("Transparent Background"))
@@ -89,7 +89,7 @@ impl eframe::App for MyApp {
                                 )
                                 .clicked()
                             {
-                                self.background = true;
+                                self.background = false;
                             }
                         }
                     };
