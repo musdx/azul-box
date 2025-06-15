@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
-use eframe::egui::{self, global_theme_preference_buttons};
+use eframe::egui::{self, Button, Color32, RichText, global_theme_preference_buttons};
 
 #[tokio::main]
 async fn main() -> eframe::Result {
@@ -23,6 +23,7 @@ struct MyApp {
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
     colors: ui::colors::Colors,
+    background: bool,
 }
 
 impl Default for MyApp {
@@ -34,6 +35,7 @@ impl Default for MyApp {
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),
             colors: ui::colors::Colors::default(),
+            background: true,
         }
     }
 }
@@ -62,11 +64,42 @@ impl eframe::App for MyApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.vertical_centered_justified(|ui| {
                 ui.heading("Azul Box");
-                global_theme_preference_buttons(ui);
+                ui.horizontal_wrapped(|ui| {
+                    global_theme_preference_buttons(ui);
+                    match self.background {
+                        true => {
+                            if ui
+                                .add(
+                                    Button::new(
+                                        RichText::new("Transparent Background")
+                                            .color(Color32::LIGHT_BLUE),
+                                    )
+                                    .fill(Color32::from_rgb(0, 92, 128)),
+                                )
+                                .clicked()
+                            {
+                                self.background = false;
+                            }
+                        }
+                        false => {
+                            if ui
+                                .add(
+                                    Button::new(RichText::new("Transparent Background"))
+                                        .fill(Color32::TRANSPARENT),
+                                )
+                                .clicked()
+                            {
+                                self.background = true;
+                            }
+                        }
+                    };
+                });
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
+        if self.background {
+            egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
+        }
         //music
         egui::Window::new("Music-dl")
             .default_open(false)
