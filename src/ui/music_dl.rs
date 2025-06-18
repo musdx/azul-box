@@ -1,3 +1,4 @@
+use crate::ui::shares::lang::lang_thing;
 use crate::ui::shares::notify::{
     button_sound, done_sound, fail_sound, notification_done, notification_fail,
 };
@@ -60,91 +61,18 @@ impl MusicDownload {
             };
         }
     }
-    fn sub_button(&mut self, ui: &mut egui::Ui, code: String, lang: String) {
-        if self.sub_lang == code {
-            if ui
-                .add(egui::Button::new(
-                    egui::RichText::new(&lang).color(Color32::LIGHT_BLUE),
-                ))
-                .clicked()
-            {
-                self.sub_lang = code;
-                ui.close_menu();
-            };
-        } else {
-            if ui.button(&lang).clicked() {
-                self.sub_lang = code;
-                ui.close_menu();
-            }
-        }
-    }
-    fn lang_choice(&mut self, ui: &mut egui::Ui) {
-        let language_codes: Vec<&str> = vec![
-            "en", // English
-            "fr", // French
-            "es", // Spanish
-            "zh", // Chinese
-            "de", // German
-            "ja", // Japanese
-            "ar", // Arabic
-            "ru", // Russian
-            "it", // Italian
-            "pt", // Portuguese
-            "nl", // Dutch
-            "sv", // Swedish
-            "no", // Norwegian
-            "fi", // Finnish
-            "da", // Danish
-            "pl", // Polish
-            "cs", // Czech
-            "hu", // Hungarian
-            "ro", // Romanian
-            "tr", // Turkish
-            "vi", // Vietnamese
-            "ko", //Korean
-        ];
-        let languages: Vec<&str> = vec![
-            "English",
-            "French",
-            "Spanish",
-            "Chinese",
-            "German",
-            "Japanese",
-            "Arabic",
-            "Russian",
-            "Italian",
-            "Portuguese",
-            "Dutch",
-            "Swedish",
-            "Norwegian",
-            "Finnish",
-            "Danish",
-            "Polish",
-            "Czech",
-            "Hungarian",
-            "Romanian",
-            "Turkish",
-            "Vietnamese",
-            "Korean",
-        ];
-        ui.menu_button("Languages", |ui| {
-            for (lang, code) in languages.iter().zip(language_codes.iter()) {
-                self.sub_button(ui, code.to_string(), lang.to_string());
-            }
-        });
-    }
     fn auto_on(&mut self, ui: &mut egui::Ui) {
         if self.auto_lyric {
             if ui
                 .add(egui::Button::new(
-                    egui::RichText::new("Auto generated lyrics").color(Color32::LIGHT_BLUE),
+                    egui::RichText::new("Auto generated").color(Color32::LIGHT_BLUE),
                 ))
                 .clicked()
             {
                 self.auto_lyric = false;
             }
         } else {
-            if ui.button("Auto generated lyrics").clicked() {
+            if ui.button("Auto generated").clicked() {
                 self.auto_lyric = true;
             }
         }
@@ -163,22 +91,24 @@ impl MusicDownload {
                     self.format_button(ui, "M4A", 4);
                     self.format_button(ui, "WAV", 5);
                 });
-                if self.lyrics && self.format != 5 {
-                    if ui
-                        .add(egui::Button::new(
-                            egui::RichText::new("Lyrics").color(Color32::LIGHT_BLUE),
-                        ))
-                        .clicked()
-                    {
-                        self.lyrics = false;
-                    };
-                    self.lang_choice(ui);
-                    self.auto_on(ui);
-                } else if self.format != 5 {
-                    if ui.button("Lyrics").clicked() {
-                        self.lyrics = true;
-                    };
-                }
+                ui.menu_button("Lyrics", |ui| {
+                    if self.lyrics && self.format != 5 {
+                        ui.horizontal(|ui| {
+                            ui.label("On/Off: ");
+                            ui.checkbox(&mut self.lyrics, "");
+                        });
+                        // self.lang_choice(ui);
+                        let lang_in = self.sub_lang.clone();
+                        self.sub_lang = lang_thing::lang_chooser(ui, lang_in);
+                        self.auto_on(ui);
+                    } else if self.format != 5 {
+                        ui.horizontal(|ui| {
+                            ui.label("On/Off: ");
+                            ui.checkbox(&mut self.lyrics, "");
+                        });
+                    }
+                });
+
                 ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
                 if ui.button("Close").clicked() {
                     ui.close_menu();

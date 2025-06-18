@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
+// use crate::ui::shares::config::config_file;
 use eframe::egui::{self, Button, Color32, RichText, global_theme_preference_buttons};
-
 #[tokio::main]
 async fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -24,6 +24,7 @@ struct MyApp {
     video_convert: ui::video_convert::VideoConvert,
     colors: ui::colors::Colors,
     background: bool,
+    run_on_start: bool,
 }
 
 impl Default for MyApp {
@@ -36,6 +37,7 @@ impl Default for MyApp {
             video_convert: ui::video_convert::VideoConvert::default(),
             colors: ui::colors::Colors::default(),
             background: true,
+            run_on_start: false,
         }
     }
 }
@@ -43,6 +45,10 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut style = (*ctx.style()).clone();
+        if !self.run_on_start {
+            // config_file();
+            self.run_on_start = true;
+        };
 
         style
             .text_styles
