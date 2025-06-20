@@ -1,8 +1,8 @@
 use eframe::egui::{self, Color32, Ui};
 
-pub struct lang_thing {}
+pub struct LangThing {}
 
-impl lang_thing {
+impl LangThing {
     pub fn lang_chooser(ui: &mut Ui, mut lang_in: String) -> String {
         let language_codes: Vec<&str> = vec![
             "en", // English

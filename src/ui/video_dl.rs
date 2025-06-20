@@ -1,4 +1,4 @@
-use crate::ui::shares::lang::lang_thing;
+use crate::ui::shares::lang::LangThing;
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use std::process::Command;
@@ -17,6 +17,7 @@ pub struct VideoDownload {
     pub frag: i8,
     pub subtitle: bool,
     pub sub_lang: String,
+    pub auto_sub: bool,
 }
 
 impl Default for VideoDownload {
@@ -32,6 +33,7 @@ impl Default for VideoDownload {
             frag: 1,
             subtitle: true,
             sub_lang: "en".to_string(),
+            auto_sub: false,
         }
     }
 }
@@ -58,6 +60,22 @@ impl VideoDownload {
             };
         }
     }
+    fn auto_on(&mut self, ui: &mut egui::Ui) {
+        if self.auto_sub {
+            if ui
+                .add(egui::Button::new(
+                    egui::RichText::new("Auto generated").color(Color32::LIGHT_BLUE),
+                ))
+                .clicked()
+            {
+                self.auto_sub = false;
+            }
+        } else {
+            if ui.button("Auto generated").clicked() {
+                self.auto_sub = true;
+            }
+        }
+    }
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
@@ -72,7 +90,8 @@ impl VideoDownload {
                             ui.checkbox(&mut self.subtitle, "")
                         });
                         let lang_in = self.sub_lang.clone();
-                        self.sub_lang = lang_thing::lang_chooser(ui, lang_in);
+                        self.sub_lang = LangThing::lang_chooser(ui, lang_in);
+                        self.auto_on(ui);
                     } else {
                         ui.horizontal(|ui| {
                             ui.label("On/Off: ");
@@ -132,9 +151,11 @@ impl VideoDownload {
                     let progress = self.status.clone();
                     let subtile = self.subtitle;
                     let lang = self.sub_lang.clone();
+                    let auto_gen = self.auto_sub;
 
                     tokio::task::spawn(async move {
-                        let status = download(link, directory, format, frags, subtile, &lang);
+                        let status =
+                            download(link, directory, format, frags, subtile, &lang, auto_gen);
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -148,7 +169,15 @@ impl VideoDownload {
     }
 }
 
-fn download(link: String, directory: String, format: i8, frag: i8, sub: bool, lang: &str) -> i8 {
+fn download(
+    link: String,
+    directory: String,
+    format: i8,
+    frag: i8,
+    sub: bool,
+    lang: &str,
+    auto_gen: bool,
+) -> i8 {
     let n = frag.to_string().to_owned();
 
     let mut yt = Command::new("yt-dlp");
@@ -157,7 +186,12 @@ fn download(link: String, directory: String, format: i8, frag: i8, sub: bool, la
         .arg("--embed-thumbnail")
         .arg("--embed-metadata")
         .current_dir(directory);
-    if sub {
+    if sub && auto_gen {
+        yt.arg("--write-auto-subs")
+            .arg("--embed-subs")
+            .arg("--sub-lang")
+            .arg(lang);
+    } else if sub {
         yt.arg("--embed-subs").arg("--sub-lang").arg(lang);
     }
 

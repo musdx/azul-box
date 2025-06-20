@@ -1,4 +1,4 @@
-use crate::ui::shares::lang::lang_thing;
+use crate::ui::shares::lang::LangThing;
 use crate::ui::shares::notify::{
     button_sound, done_sound, fail_sound, notification_done, notification_fail,
 };
@@ -99,7 +99,7 @@ impl MusicDownload {
                         });
                         // self.lang_choice(ui);
                         let lang_in = self.sub_lang.clone();
-                        self.sub_lang = lang_thing::lang_chooser(ui, lang_in);
+                        self.sub_lang = LangThing::lang_chooser(ui, lang_in);
                         self.auto_on(ui);
                     } else if self.format != 5 {
                         ui.horizontal(|ui| {
@@ -348,8 +348,7 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
 
 fn finder_lyrics(directory: &str, filename: &str) -> Option<PathBuf> {
     let elements = fs::read_dir(&directory).ok()?;
-    let direc = PathBuf::new();
-    let mut thing = Some(direc);
+    let mut thing = Some(PathBuf::new());
 
     for item in elements {
         let path = item.ok()?.path();
