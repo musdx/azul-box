@@ -1,7 +1,38 @@
 [package]
 name = "azul-box"
+authors = ["musdx", "https://github.com/musdx/azul-box"]
 version = "0.1.68"
 edition = "2024"
+description = "A utility box for ffmpeg, yt-dlp, and more"
+license = "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/musdx/azul-box"
+repository = "https://github.com/musdx/azul-box"
+
+[package.metadata.deb]
+assets = [
+    [
+        "target/release/azul-box",
+        "/usr/bin/azul_box",
+        "755",
+    ],
+    [
+        "desktop/azul_box.desktop",
+        "~/.local/share/applications/",
+        "777",
+    ],
+    [
+        "target/release/azul-box",
+        "/opt/azul_box/azul-box",
+        "755",
+    ],
+    [
+        "assets/logo.svg",
+        "/opt/azul_box/assets/logo.svg",
+        "644",
+    ],
+]
 
 [dependencies]
 dirs = "6.0.0"
