@@ -28,23 +28,17 @@ The features will be really random because this is a software I made to randomly
 
 ### Archlinux:
 
-Install [rustup](https://rustup.rs/)
-
 ```
 sudo pacman -S ffmpeg yt-dlp python-mutagen
 ```
 
 ### Linuxmint:
 
-Install [rustup](https://rustup.rs/)
-
 ```
 sudo apt install ffmpeg yt-dlp python3-mutagen
 ```
 
 ### openSUSE Tumbleweed:
-
-Install [rustup](https://rustup.rs/)
 
 You may need to add some extra official opensuse repo.
 
@@ -54,8 +48,6 @@ sudo zypper in yt-dlp python-mutagen
 
 ### Fedora(non atomic):
 
-Install [rustup](https://rustup.rs/)
-
 ```
 sudo dnf install ffmpeg-free yt-dlp python3-mutagen
 ```
@@ -64,21 +56,28 @@ sudo dnf install ffmpeg-free yt-dlp python3-mutagen
 
 Use this follow command to build then install the app. You will still need to install dependencies before run the install script.
 
-#### You may want to use download the release source and build from there instead of clone the repo.
-```
-git clone https://github.com/musdx/azul-box
-cd azul-box
-sudo chmod +x install.sh
-./install.sh
-```
+### Debian based distro
+
+- Download the deb file from release
+- Install it via apt
+- Enjoy!!!
+
+### Any other distro
+
+- Download the bin.zip file from release
+- Unzip it
+- Run the install.sh file init
+- Enjoy!!!
 
 ## Uninstallation
 
 ```
-sudo rm -r /opt/azul_box/
+sudo rm -r /usr/bin/azulbox/
 sudo rm /usr/share/icons/azul_box.png
-sudo rm ~/.local/share/applications/azul_box.desktop
+sudo rm /usr/share/applications/azul_box.desktop
 ```
+
+or just uninstall via your package manager if you install via apt
 
 ## Showcase
 
