@@ -72,7 +72,7 @@ Use this follow command to build then install the app. You will still need to in
 ## Uninstallation
 
 ```
-sudo rm -r /usr/bin/azulbox/
+sudo rm /usr/bin/azulbox
 sudo rm /usr/share/icons/azul_box.png
 sudo rm /usr/share/applications/azul_box.desktop
 ```
