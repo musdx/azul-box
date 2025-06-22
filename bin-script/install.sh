@@ -4,13 +4,14 @@ RED='\033[0;31m'
 YELLOW='\033[1;32m'
 
 
-cargo build --release
 
 echo -e ${YELLOW}copy content
 
 sudo cp logo.png /usr/share/icons/azul_box.png
 
 sudo cp azul-box /usr/bin/azulbox
+
+sudo chmod +x /usr/bin/azulbox
 
 sudo cp azul_box.desktop /usr/share/applications/
 
