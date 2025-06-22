@@ -8,10 +8,10 @@ cargo build --release
 
 echo -e ${YELLOW}copy content
 
-sudo cp assets/logo.png /usr/share/icons/azul_box.png
+sudo cp logo.png /usr/share/icons/azul_box.png
 
-sudo cp target/release/azul-box /usr/bin/azulbox
+sudo cp azul-box /usr/bin/azulbox
 
-sudo cp desktop/azul_box.desktop /usr/share/applications/
+sudo cp azul_box.desktop /usr/share/applications/
 
 echo -e ${RED}Remember to install dependencies! Check https://github.com/musdx/azul-box/blob/master/README.md#dependencies for more info
