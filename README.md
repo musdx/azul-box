@@ -58,13 +58,13 @@ Use this follow command to build then install the app. You will still need to in
 
 ### Debian based distro
 
-- Download the deb file from release
+- Download the deb file from [release](https://github.com/musdx/azul-box/releases)
 - Install it via apt
 - Enjoy!!!
 
 ### Any other distro
 
-- Download the bin.zip file from release
+- Download the bin.zip file from [release](https://github.com/musdx/azul-box/releases)
 - Unzip it
 - Run the install.sh file init
 - Enjoy!!!
