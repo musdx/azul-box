@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Azul box
 Comment=A box that i like
-Exec=/opt/azul_box/azul-box
-Icon=/opt/azul_box/assets/logo.svg
+Exec=/usr/bin/azulbox
+Icon=/usr/share/icons/azul_box.png
 Terminal=false
 Type=Application
 Categories=AudioVideo;
