@@ -2,11 +2,17 @@
 
 mod ui;
 // use crate::ui::shares::config::config_file;
-use eframe::egui::{self, Button, Color32, RichText, global_theme_preference_buttons};
+use eframe::egui::{self, Button, Color32, IconData, RichText, global_theme_preference_buttons};
 #[tokio::main]
 async fn main() -> eframe::Result {
+    let icon = include_bytes!("../assets/logo.png").to_vec();
+    let icon = IconData {
+        rgba: icon,
+        width: 32,
+        height: 32,
+    };
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default(),
+        viewport: egui::ViewportBuilder::default().with_icon(icon),
         ..Default::default()
     };
     eframe::run_native(

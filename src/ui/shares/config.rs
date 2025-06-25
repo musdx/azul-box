@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+#[allow(dead_code)]
 pub fn config_file() {
     let azul_conf = "AzulBox";
     let azul_conf_file = "azul.config";
