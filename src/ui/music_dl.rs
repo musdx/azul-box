@@ -3,7 +3,7 @@ use crate::ui::shares::musicbrainz::musicbrain_work;
 use crate::ui::shares::notify::{
     button_sound, done_sound, fail_sound, notification_done, notification_fail,
 };
-use eframe::egui::{self, Button, Color32, RichText};
+use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
 use std::fs;
 use std::path::{Path, PathBuf};

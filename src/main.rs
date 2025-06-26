@@ -2,7 +2,7 @@
 
 mod ui;
 // use crate::ui::shares::config::config_file;
-use eframe::egui::{self, Button, Color32, IconData, RichText, global_theme_preference_buttons};
+use eframe::egui::{self, IconData, RichText, global_theme_preference_buttons};
 #[tokio::main]
 async fn main() -> eframe::Result {
     let icon = include_bytes!("../assets/logo.png").to_vec();
