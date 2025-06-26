@@ -1,8 +1,9 @@
 use crate::ui::shares::lang::LangThing;
+use crate::ui::shares::musicbrainz::musicbrain_work;
 use crate::ui::shares::notify::{
     button_sound, done_sound, fail_sound, notification_done, notification_fail,
 };
-use eframe::egui::{self, Color32};
+use eframe::egui::{self, Button, Color32, RichText};
 use native_dialog::DialogBuilder;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -19,6 +20,8 @@ pub struct MusicDownload {
     pub frag: i8,
     pub sub_lang: String,
     pub auto_lyric: bool,
+    pub sim_rate: i8,
+    pub musicbrainz: bool,
 }
 
 impl Default for MusicDownload {
@@ -35,6 +38,8 @@ impl Default for MusicDownload {
             frag: 1,
             sub_lang: "en".to_string(),
             auto_lyric: false,
+            sim_rate: 90,
+            musicbrainz: false,
         }
     }
 }
@@ -42,6 +47,18 @@ impl Default for MusicDownload {
 impl MusicDownload {
     fn start_download_status(&mut self) {
         self.status.store(1, Ordering::Relaxed);
+    }
+    fn music_brainz_button(&mut self, ui: &mut egui::Ui) {
+        ui.menu_button("Musicbrainz", |ui| {
+            ui.horizontal(|ui| {
+                ui.label("On/Off: ");
+                ui.checkbox(&mut self.musicbrainz, "");
+            });
+            ui.add(
+                egui::widgets::Slider::new(&mut self.sim_rate, 0..=100)
+                    .text("Similarity threshold"),
+            );
+        });
     }
     fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
         if self.format == numbername {
@@ -108,6 +125,7 @@ impl MusicDownload {
                         });
                     }
                 });
+                self.music_brainz_button(ui);
 
                 ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
                 if ui.button("Close").clicked() {
@@ -162,10 +180,13 @@ impl MusicDownload {
                     let frags = self.frag;
                     let lang_code = self.sub_lang.clone();
                     let auto = self.auto_lyric;
+                    let brain = self.musicbrainz;
+                    let sim = self.sim_rate;
 
                     tokio::task::spawn(async move {
-                        let status =
-                            download(link, directory, format, lyrics, frags, lang_code, auto);
+                        let status = download(
+                            link, directory, format, lyrics, frags, lang_code, auto, sim, brain,
+                        );
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -192,21 +213,69 @@ fn download(
     frags: i8,
     lang_code: String,
     lyric_auto: bool,
+    sim_rate: i8,
+    musicbrainz: bool,
 ) -> i8 {
     if format == 1 {
         format_dl(
-            link, directory, "opus", lyrics, frags, lang_code, lyric_auto,
+            link,
+            directory,
+            "opus",
+            lyrics,
+            frags,
+            lang_code,
+            lyric_auto,
+            sim_rate,
+            musicbrainz,
         )
     } else if format == 2 {
         format_dl(
-            link, directory, "flac", lyrics, frags, lang_code, lyric_auto,
+            link,
+            directory,
+            "flac",
+            lyrics,
+            frags,
+            lang_code,
+            lyric_auto,
+            sim_rate,
+            musicbrainz,
         )
     } else if format == 3 {
-        format_dl(link, directory, "mp3", lyrics, frags, lang_code, lyric_auto)
+        format_dl(
+            link,
+            directory,
+            "mp3",
+            lyrics,
+            frags,
+            lang_code,
+            lyric_auto,
+            sim_rate,
+            musicbrainz,
+        )
     } else if format == 4 {
-        format_dl(link, directory, "m4a", lyrics, frags, lang_code, lyric_auto)
+        format_dl(
+            link,
+            directory,
+            "m4a",
+            lyrics,
+            frags,
+            lang_code,
+            lyric_auto,
+            sim_rate,
+            musicbrainz,
+        )
     } else if format == 5 {
-        format_dl(link, directory, "wav", lyrics, frags, lang_code, lyric_auto)
+        format_dl(
+            link,
+            directory,
+            "wav",
+            lyrics,
+            frags,
+            lang_code,
+            lyric_auto,
+            sim_rate,
+            musicbrainz,
+        )
     } else {
         3
     }
@@ -220,6 +289,8 @@ fn format_dl(
     frags: i8,
     lang_code: String,
     auto_lyric: bool,
+    sim_rate: i8,
+    musicbrainz: bool,
 ) -> i8 {
     let n = frags.to_string();
     println!("{n}");
@@ -267,7 +338,7 @@ fn format_dl(
             .filter(|line| line.starts_with("[EmbedThumbnail]"))
             .collect();
 
-        lyrics_work(files, format_name, directory);
+        lyrics_work(files, format_name, directory, sim_rate, musicbrainz);
         status = if log.contains("[EmbedThumbnail]") {
             2
         } else {
@@ -293,7 +364,13 @@ fn format_dl(
     status
 }
 
-fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
+fn lyrics_work(
+    files: Vec<&str>,
+    format_name: &str,
+    directory: String,
+    sim_rate: i8,
+    musicbrainz: bool,
+) {
     for i in files.into_iter() {
         println!("i: {i}");
         let item = i.split("Adding thumbnail to \"").last().unwrap();
@@ -346,6 +423,9 @@ fn lyrics_work(files: Vec<&str>, format_name: &str, directory: String) {
             tag.save_to_path(&music_file, WriteOptions::default())
                 .expect("ERROR: Failed to write the tag!");
 
+            if musicbrainz {
+                musicbrain_work(&music_file, sim_rate);
+            }
             println!("INFO: Tag successfully updated!");
             let _ = fs::remove_file(&lyrics_file);
         }

@@ -32,7 +32,6 @@ struct MyApp {
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
     colors: ui::colors::Colors,
-    background: bool,
     run_on_start: bool,
     yt: bool,
     ffmpeg: bool,
@@ -48,7 +47,6 @@ impl Default for MyApp {
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),
             colors: ui::colors::Colors::default(),
-            background: true,
             run_on_start: false,
             yt: true,
             ffmpeg: false,
@@ -87,40 +85,11 @@ impl eframe::App for MyApp {
                 ui.heading("Azul Box");
                 ui.horizontal_wrapped(|ui| {
                     global_theme_preference_buttons(ui);
-                    match self.background {
-                        false => {
-                            if ui
-                                .add(
-                                    Button::new(
-                                        RichText::new("Transparent Background")
-                                            .color(Color32::LIGHT_BLUE),
-                                    )
-                                    .fill(Color32::from_rgb(0, 92, 128)),
-                                )
-                                .clicked()
-                            {
-                                self.background = true;
-                            }
-                        }
-                        true => {
-                            if ui
-                                .add(
-                                    Button::new(RichText::new("Transparent Background"))
-                                        .fill(Color32::TRANSPARENT),
-                                )
-                                .clicked()
-                            {
-                                self.background = false;
-                            }
-                        }
-                    };
                 });
             });
         });
 
-        if self.background {
-            egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
-        };
+        egui::CentralPanel::default().show(ctx, |ui| ui.label(""));
         egui::SidePanel::left("Panel")
             .resizable(true)
             .width_range(27.0..=90.0)
