@@ -314,6 +314,8 @@ fn format_dl(
         .arg("uploader:%(artist)s")
         .arg("--output")
         .arg("%(title)s.%(ext)s")
+        .arg("--compat-options")
+        .arg("no-live-chat")
         .current_dir(&directory);
 
     let status: i8;

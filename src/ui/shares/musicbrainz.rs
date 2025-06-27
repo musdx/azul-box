@@ -39,29 +39,14 @@ pub fn musicbrain_work(opt: &Path, similarity_rate: i8) {
         title, artist
     );
     println!("{query}");
-    let _ = fetch_musicbrainzapi(&query, opt, similarity_rate);
+    let _ = fetch_musicbrainzapi(&query, opt, similarity_rate, tag);
 }
-fn fetch_musicbrainzapi(q: &str, opt: &Path, similarity_rate: i8) -> Result<(), Box<dyn Error>> {
-    let mut tagged_file = Probe::open(&opt)
-        .expect("ERROR: Bad path provided!")
-        .read()
-        .expect("ERROR: Failed to read file!");
-
-    let tag = match tagged_file.primary_tag_mut() {
-        Some(primary_tag) => primary_tag,
-        None => {
-            if let Some(first_tag) = tagged_file.first_tag_mut() {
-                first_tag
-            } else {
-                let tag_type = tagged_file.primary_tag_type();
-
-                eprintln!("WARN: No tags found, creating a new tag of type `{tag_type:?}`");
-                tagged_file.insert_tag(Tag::new(tag_type));
-
-                tagged_file.primary_tag_mut().unwrap()
-            }
-        }
-    };
+fn fetch_musicbrainzapi(
+    q: &str,
+    opt: &Path,
+    similarity_rate: i8,
+    tag: &mut Tag,
+) -> Result<(), Box<dyn Error>> {
     let config = Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(5)))
         .build();
