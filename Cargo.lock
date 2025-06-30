@@ -478,8 +478,10 @@ dependencies = [
  "rodio",
  "scraper",
  "serde",
+ "serde_json",
  "tokio",
  "ureq",
+ "url",
 ]
 
 [[package]]

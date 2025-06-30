@@ -1,4 +1,5 @@
 use crate::ui::shares::lang::LangThing;
+use crate::ui::shares::lrclib::lrclib_fetch;
 use crate::ui::shares::musicbrainz::musicbrain_work;
 use crate::ui::shares::notify::{
     button_sound, done_sound, fail_sound, notification_done, notification_fail,
@@ -22,6 +23,7 @@ pub struct MusicDownload {
     pub auto_lyric: bool,
     pub sim_rate: i8,
     pub musicbrainz: bool,
+    pub lrclib: bool,
 }
 
 impl Default for MusicDownload {
@@ -40,6 +42,7 @@ impl Default for MusicDownload {
             auto_lyric: false,
             sim_rate: 90,
             musicbrainz: false,
+            lrclib: false,
         }
     }
 }
@@ -118,6 +121,8 @@ impl MusicDownload {
                         let lang_in = self.sub_lang.clone();
                         self.sub_lang = LangThing::lang_chooser(ui, lang_in);
                         self.auto_on(ui);
+                        ui.separator();
+                        ui.checkbox(&mut self.lrclib, "Liblrc lyrics");
                     } else if self.format != 5 {
                         ui.horizontal(|ui| {
                             ui.label("On/Off: ");
@@ -182,10 +187,12 @@ impl MusicDownload {
                     let auto = self.auto_lyric;
                     let brain = self.musicbrainz;
                     let sim = self.sim_rate;
+                    let lrclib = self.lrclib;
 
                     tokio::task::spawn(async move {
                         let status = download(
                             link, directory, format, lyrics, frags, lang_code, auto, sim, brain,
+                            lrclib,
                         );
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
@@ -215,6 +222,7 @@ fn download(
     lyric_auto: bool,
     sim_rate: i8,
     musicbrainz: bool,
+    lrclib: bool,
 ) -> i8 {
     if format == 1 {
         format_dl(
@@ -227,6 +235,7 @@ fn download(
             lyric_auto,
             sim_rate,
             musicbrainz,
+            lrclib,
         )
     } else if format == 2 {
         format_dl(
@@ -239,6 +248,7 @@ fn download(
             lyric_auto,
             sim_rate,
             musicbrainz,
+            lrclib,
         )
     } else if format == 3 {
         format_dl(
@@ -251,6 +261,7 @@ fn download(
             lyric_auto,
             sim_rate,
             musicbrainz,
+            lrclib,
         )
     } else if format == 4 {
         format_dl(
@@ -263,6 +274,7 @@ fn download(
             lyric_auto,
             sim_rate,
             musicbrainz,
+            lrclib,
         )
     } else if format == 5 {
         format_dl(
@@ -275,6 +287,7 @@ fn download(
             lyric_auto,
             sim_rate,
             musicbrainz,
+            lrclib,
         )
     } else {
         3
@@ -291,6 +304,7 @@ fn format_dl(
     auto_lyric: bool,
     sim_rate: i8,
     musicbrainz: bool,
+    lrclib: bool,
 ) -> i8 {
     let n = frags.to_string();
     println!("{n}");
@@ -354,6 +368,9 @@ fn format_dl(
             let music_file = Path::new(&music_file);
             if musicbrainz {
                 musicbrain_work(&music_file, sim_rate);
+            }
+            if lrclib {
+                lrclib_fetch(&music_file);
             }
         }
         status = if log.contains("[EmbedThumbnail]") {
