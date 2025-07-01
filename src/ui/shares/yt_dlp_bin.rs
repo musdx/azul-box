@@ -14,13 +14,11 @@ pub fn ytdlp_cache() -> Option<PathBuf> {
     }
 
     let bin_path = azul_box.join("yt-dlp");
-    // Write the raw bytes to the specified path
     if let Err(e) = fs::write(&bin_path, raw_bytes) {
         eprintln!("Failed to write bytes to file: {}", e);
-        return None; // Return None if writing fails
+        return None;
     }
 
-    // Set the file as executable
     let mut permissions = fs::metadata(&bin_path).ok()?.permissions();
 
     permissions.set_mode(0o755);
