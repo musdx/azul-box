@@ -30,8 +30,8 @@ pub fn lrclib_fetch(opt: &Path, lang: &str) {
     };
     let artist = tag.artist().unwrap();
     let title = tag.title().unwrap();
-    let title = title.to_string().replace(" ", "+");
-    let artist = artist.to_string().replace(" ", "+");
+    let artist: String = form_urlencoded::byte_serialize(artist.as_bytes()).collect();
+    let title: String = form_urlencoded::byte_serialize(title.as_bytes()).collect();
     println!("{title}\n{artist}");
     let query = format!(
         "https://lrclib.net/api/get?artist_name={}&track_name={}",
@@ -43,7 +43,7 @@ pub fn lrclib_fetch(opt: &Path, lang: &str) {
         Ok(ly) => {
             println!("{ly}");
             if !ly.is_empty() {
-                let lyric_after = translate("en", &ly);
+                let lyric_after = translate(lang, &ly);
                 if lyric_after.is_ok() {
                     let lyric_final = lyric_after.as_ref().ok().unwrap();
                     if !lyric_final.is_empty() {

@@ -30,10 +30,12 @@ pub fn musicbrain_work(opt: &Path, similarity_rate: i8) {
             }
         }
     };
+    use url::form_urlencoded;
+
     let artist = tag.artist().unwrap();
     let title = tag.title().unwrap();
-    let title = title.to_string().replace(" ", "%20");
-    let artist = artist.to_string().replace(" ", "%20");
+    let artist: String = form_urlencoded::byte_serialize(artist.as_bytes()).collect();
+    let title: String = form_urlencoded::byte_serialize(title.as_bytes()).collect();
     let query = format!(
         "https://musicbrainz.org/ws/2/recording?query={}%20AND%20artist:{}&fmt=json",
         title, artist
