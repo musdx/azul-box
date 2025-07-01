@@ -98,7 +98,7 @@ impl MusicDownload {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, azul_yt: &PathBuf) {
         if self.format == 5 {
             self.lyrics = false;
         }
@@ -188,11 +188,12 @@ impl MusicDownload {
                     let brain = self.musicbrainz;
                     let sim = self.sim_rate;
                     let lrclib = self.lrclib;
+                    let azul = azul_yt.clone();
 
                     tokio::task::spawn(async move {
                         let status = download(
                             link, directory, format, lyrics, frags, lang_code, auto, sim, brain,
-                            lrclib,
+                            lrclib, azul,
                         );
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
@@ -223,6 +224,7 @@ fn download(
     sim_rate: i8,
     musicbrainz: bool,
     lrclib: bool,
+    azul_yt: PathBuf,
 ) -> i8 {
     if format == 1 {
         format_dl(
@@ -236,6 +238,7 @@ fn download(
             sim_rate,
             musicbrainz,
             lrclib,
+            azul_yt,
         )
     } else if format == 2 {
         format_dl(
@@ -249,6 +252,7 @@ fn download(
             sim_rate,
             musicbrainz,
             lrclib,
+            azul_yt,
         )
     } else if format == 3 {
         format_dl(
@@ -262,6 +266,7 @@ fn download(
             sim_rate,
             musicbrainz,
             lrclib,
+            azul_yt,
         )
     } else if format == 4 {
         format_dl(
@@ -275,6 +280,7 @@ fn download(
             sim_rate,
             musicbrainz,
             lrclib,
+            azul_yt,
         )
     } else if format == 5 {
         format_dl(
@@ -288,6 +294,7 @@ fn download(
             sim_rate,
             musicbrainz,
             lrclib,
+            azul_yt,
         )
     } else {
         3
@@ -305,13 +312,14 @@ fn format_dl(
     sim_rate: i8,
     musicbrainz: bool,
     lrclib: bool,
+    azul_yt: PathBuf,
 ) -> i8 {
     let n = frags.to_string();
     println!("{n}");
 
     let files: Vec<&str>;
 
-    let mut yt = Command::new("yt-dlp");
+    let mut yt = Command::new(azul_yt);
     yt.arg("--concurrent-fragments")
         .arg(&n)
         .arg("-i")

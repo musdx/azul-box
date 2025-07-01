@@ -1,8 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
+use std::path::PathBuf;
+use ui::shares::yt_dlp_bin;
 // use crate::ui::shares::config::config_file;
 use eframe::egui::{self, IconData, RichText, global_theme_preference_buttons};
+
 #[tokio::main]
 async fn main() -> eframe::Result {
     let icon = include_bytes!("../assets/logo.png").to_vec();
@@ -36,6 +39,7 @@ struct MyApp {
     yt: bool,
     ffmpeg: bool,
     pin: bool,
+    azul_yt: PathBuf,
 }
 
 impl Default for MyApp {
@@ -51,6 +55,7 @@ impl Default for MyApp {
             yt: true,
             ffmpeg: false,
             pin: false,
+            azul_yt: PathBuf::new(),
         }
     }
 }
@@ -60,6 +65,9 @@ impl eframe::App for MyApp {
         let mut style = (*ctx.style()).clone();
         if !self.run_on_start {
             // config_file();
+            if let Some(bin_path) = yt_dlp_bin::ytdlp_cache() {
+                self.azul_yt = bin_path;
+            }
             self.run_on_start = true;
         };
 
@@ -109,13 +117,13 @@ impl eframe::App for MyApp {
             egui::Window::new("Music-dl")
                 .default_open(false)
                 .resizable(false)
-                .show(ctx, |ui| self.music_download.ui(ui));
+                .show(ctx, |ui| self.music_download.ui(ui, &self.azul_yt));
             //Video
             egui::Window::new("Video-dl")
                 .default_open(false)
                 .resizable(false)
                 .show(ctx, |ui| {
-                    self.video_download.ui(ui);
+                    self.video_download.ui(ui, &self.azul_yt);
                 });
         }
         if self.pin {

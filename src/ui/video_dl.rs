@@ -1,6 +1,7 @@
 use crate::ui::shares::lang::LangThing;
 use eframe::egui::{self, Color32};
 use native_dialog::DialogBuilder;
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI8, Ordering};
@@ -76,7 +77,7 @@ impl VideoDownload {
             }
         }
     }
-    pub fn ui(&mut self, ui: &mut egui::Ui) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, azul_yt: &PathBuf) {
         ui.horizontal(|ui| {
             ui.menu_button("Setting", |ui| {
                 ui.menu_button("Format", |ui| {
@@ -152,10 +153,12 @@ impl VideoDownload {
                     let subtile = self.subtitle;
                     let lang = self.sub_lang.clone();
                     let auto_gen = self.auto_sub;
+                    let azul = azul_yt.clone();
 
                     tokio::task::spawn(async move {
-                        let status =
-                            download(link, directory, format, frags, subtile, &lang, auto_gen);
+                        let status = download(
+                            link, directory, format, frags, subtile, &lang, auto_gen, azul,
+                        );
                         progress.store(status, Ordering::Relaxed);
                         if status == 2 {
                             done_sound();
@@ -182,10 +185,11 @@ fn download(
     sub: bool,
     lang: &str,
     auto_gen: bool,
+    azul_yt: PathBuf,
 ) -> i8 {
     let n = frag.to_string().to_owned();
 
-    let mut yt = Command::new("yt-dlp");
+    let mut yt = Command::new(azul_yt);
     yt.arg("--concurrent-fragments")
         .arg(n)
         .arg("--embed-thumbnail")
