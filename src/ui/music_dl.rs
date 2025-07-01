@@ -370,7 +370,7 @@ fn format_dl(
                 musicbrain_work(&music_file, sim_rate);
             }
             if lrclib {
-                lrclib_fetch(&music_file);
+                lrclib_fetch(&music_file, &lang_code);
             }
         }
         status = if log.contains("[EmbedThumbnail]") {

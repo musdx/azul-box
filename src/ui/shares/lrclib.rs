@@ -7,7 +7,7 @@ use lofty::probe::Probe;
 use lofty::tag::Tag;
 use serde::Deserialize;
 #[allow(dead_code)]
-pub fn lrclib_fetch(opt: &Path) {
+pub fn lrclib_fetch(opt: &Path, lang: &str) {
     let mut tagged_file = Probe::open(&opt)
         .expect("ERROR: Bad path provided!")
         .read()
@@ -42,7 +42,7 @@ pub fn lrclib_fetch(opt: &Path) {
     match lyrics {
         Ok(ly) => {
             println!("{ly}");
-            let lyric_after = translate("en", &ly);
+            let lyric_after = translate(lang, &ly);
             if lyric_after.is_ok() {
                 tag.insert_text(ItemKey::Lyrics, lyric_after.unwrap());
                 tag.save_to_path(opt, WriteOptions::default())
@@ -64,16 +64,26 @@ struct ApiResponse {
 fn fetch(query: &str) -> Result<String, Box<dyn Error>> {
     let resp = ureq::get(query)
         .header("User-Agent", "Azulbox (https://github.com/musdx/azul-box)")
-        .call()?
-        .body_mut()
-        .read_json::<ApiResponse>()?;
-    if !resp.syncedLyrics.is_empty() {
-        Ok(resp.syncedLyrics)
-    } else if !resp.plainLyrics.is_empty() {
-        Ok(resp.plainLyrics)
-    } else {
-        Ok(String::new())
+        .call();
+    let mut retu: String = String::new();
+    match resp {
+        Ok(mut a) => {
+            let json = a.body_mut().read_json::<ApiResponse>();
+            if json.is_ok() {
+                let lyr = json.ok().unwrap();
+                if !lyr.syncedLyrics.is_empty() {
+                    retu = lyr.syncedLyrics;
+                } else if !lyr.plainLyrics.is_empty() {
+                    retu = lyr.plainLyrics;
+                } else {
+                }
+            }
+        }
+        Err(e) => {
+            println!("{e}");
+        }
     }
+    Ok(retu)
 }
 
 use serde_json::Value;
