@@ -42,11 +42,16 @@ pub fn lrclib_fetch(opt: &Path, lang: &str) {
     match lyrics {
         Ok(ly) => {
             println!("{ly}");
-            let lyric_after = translate(lang, &ly);
-            if lyric_after.is_ok() {
-                tag.insert_text(ItemKey::Lyrics, lyric_after.unwrap());
-                tag.save_to_path(opt, WriteOptions::default())
-                    .expect("ERROR: Failed to write the tag!");
+            if !ly.is_empty() {
+                let lyric_after = translate("en", &ly);
+                if lyric_after.is_ok() {
+                    let lyric_final = lyric_after.as_ref().ok().unwrap();
+                    if !lyric_final.is_empty() {
+                        tag.insert_text(ItemKey::Lyrics, lyric_after.unwrap());
+                        tag.save_to_path(opt, WriteOptions::default())
+                            .expect("ERROR: Failed to write the tag!");
+                    }
+                }
             }
         }
         Err(e) => {
