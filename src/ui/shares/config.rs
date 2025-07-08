@@ -1,19 +1,95 @@
-use std::fs;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::{fs, path::Path};
+
 #[allow(dead_code)]
-pub fn config_file() {
+pub fn config_file_default() {
     let azul_conf = "AzulBox";
-    let azul_conf_file = "azul.config";
-    let config_dir = dirs::config_dir()
-        .map(|path| path.to_string_lossy().into_owned())
-        .unwrap_or_else(|| String::from(""));
-    let azul_conf_dir = format!("{config_dir}/{azul_conf}");
-    if !Path::new(&azul_conf_dir).exists() {
-        let _ = fs::create_dir(Path::new(&azul_conf_dir));
+    let azul_conf_file = "config.toml";
+    let config_dir = dirs::config_dir().unwrap();
+    let azul_conf_dir = config_dir.join(azul_conf);
+    if !azul_conf_dir.exists() {
+        let _ = fs::create_dir(&azul_conf_dir);
     }
-    let azul_conf_file_with_dir = format!("{azul_conf_dir}/{azul_conf_file}");
-    if !Path::new(&azul_conf_file_with_dir).exists() {
-        let contents = "";
-        let _ = fs::write(Path::new(&azul_conf_file_with_dir), contents);
+    let azul_conf_file_with_dir = azul_conf_dir.join(azul_conf_file);
+    if !azul_conf_file_with_dir.exists() {
+        let contents: Config = Config {
+            universal: Universal {
+                language: "en".to_string(),
+            },
+            video_dl: VideoDl {
+                format: "mkv".to_string(),
+                subtitle: true,
+                auto_gen_sub: false,
+                fragments: 1,
+            },
+            music_dl: MusicDl {
+                format: "opus".to_string(),
+                lyrics: true,
+                auto_gen_sub: false,
+                liblrc: false,
+                musicbrainz: false,
+                threshold: 90,
+                fragments: 1,
+            },
+        };
+        match save_config(&contents, &azul_conf_file_with_dir) {
+            Ok(_) => {
+                println!("Saved default config")
+            }
+            Err(e) => {
+                eprintln!("Fail to save default config {e}")
+            }
+        }
     }
+}
+
+fn save_config(config: &Config, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let toml_string = toml::to_string(config)?;
+    fs::write(path, toml_string)?;
+    Ok(())
+}
+#[allow(dead_code)]
+pub fn load_config(path: &Path) -> Result<Config, Box<dyn std::error::Error>> {
+    let toml_string = fs::read_to_string(path)?;
+    let config: Config = toml::from_str(&toml_string)?;
+    Ok(config)
+}
+#[allow(dead_code)]
+pub fn modifier_config<F>(path: &Path, modify_fn: F) -> Result<(), Box<dyn std::error::Error>>
+where
+    F: FnOnce(&mut Config),
+{
+    let mut config = load_config(path)?;
+    modify_fn(&mut config);
+    save_config(&config, path)?;
+    Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    pub universal: Universal,
+    pub video_dl: VideoDl,
+    pub music_dl: MusicDl,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Universal {
+    pub language: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VideoDl {
+    pub format: String,
+    pub subtitle: bool,
+    pub auto_gen_sub: bool,
+    pub fragments: i8,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MusicDl {
+    pub format: String,
+    pub lyrics: bool,
+    pub auto_gen_sub: bool,
+    pub liblrc: bool,
+    pub musicbrainz: bool,
+    pub threshold: i8,
+    pub fragments: i8,
 }

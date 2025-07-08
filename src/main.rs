@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
-// use crate::ui::shares::config::config_file;
+// use crate::ui::shares::config::config_file_default;
 use eframe::egui::{self, IconData, RichText, global_theme_preference_buttons};
 #[tokio::main]
 async fn main() -> eframe::Result {
@@ -18,8 +18,8 @@ async fn main() -> eframe::Result {
     eframe::run_native(
         "azul_box",
         options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
+        Box::new(|_cc| {
+            // egui_extras::install_image_loaders(&cc.egui_ctx);
             Ok(Box::<MyApp>::default())
         }),
     )
@@ -57,7 +57,7 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut style = (*ctx.style()).clone();
         if !self.run_on_start {
-            // config_file();
+            // config_file_default();
             self.run_on_start = true;
         };
 
