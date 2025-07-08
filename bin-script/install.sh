@@ -7,12 +7,10 @@ YELLOW='\033[1;32m'
 
 echo -e ${YELLOW}copy content
 
-sudo cp logo.png /usr/share/icons/azul_box.png
+sudo install -Dm 644 logo.png /usr/share/icons/azul_box.png
 
-sudo cp azul-box /usr/bin/azulbox
+sudo install -Dm 755 azul-box /usr/bin/azulbox
 
-sudo chmod +x /usr/bin/azulbox
-
-sudo cp azul_box.desktop /usr/share/applications/
+sudo install -Dm 644 azul_box.desktop /usr/share/applications/
 
 echo -e ${RED}Remember to install dependencies! Check https://github.com/musdx/azul-box/blob/master/README.md#dependencies for more info
