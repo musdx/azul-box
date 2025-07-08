@@ -31,7 +31,6 @@ struct MyApp {
     pinterest_download: ui::pinterest::PinterstDownload,
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
-    colors: ui::colors::Colors,
     run_on_start: bool,
     yt: bool,
     ffmpeg: bool,
@@ -46,7 +45,6 @@ impl Default for MyApp {
             pinterest_download: ui::pinterest::PinterstDownload::default(),
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),
-            colors: ui::colors::Colors::default(),
             run_on_start: false,
             yt: true,
             ffmpeg: false,
@@ -143,13 +141,5 @@ impl eframe::App for MyApp {
                     self.video_convert.ui(ui);
                 });
         }
-
-        //Color
-        egui::Window::new("Colors picker")
-            .default_open(false)
-            .resizable(false)
-            .show(ctx, |ui| {
-                self.colors.ui(ui);
-            });
     }
 }
