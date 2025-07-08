@@ -1,7 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
-// use crate::ui::shares::config::config_file_default;
+
+use crate::ui::shares::config::config_file_default;
 use eframe::egui::{self, IconData, RichText, global_theme_preference_buttons};
 #[tokio::main]
 async fn main() -> eframe::Result {
@@ -20,12 +21,12 @@ async fn main() -> eframe::Result {
         options,
         Box::new(|_cc| {
             // egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::<MyApp>::default())
+            Ok(Box::<MainApp>::default())
         }),
     )
 }
 
-struct MyApp {
+struct MainApp {
     music_download: ui::music_dl::MusicDownload,
     video_download: ui::video_dl::VideoDownload,
     pinterest_download: ui::pinterest::PinterstDownload,
@@ -37,7 +38,7 @@ struct MyApp {
     pin: bool,
 }
 
-impl Default for MyApp {
+impl Default for MainApp {
     fn default() -> Self {
         Self {
             music_download: ui::music_dl::MusicDownload::default(),
@@ -53,11 +54,11 @@ impl Default for MyApp {
     }
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for MainApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut style = (*ctx.style()).clone();
         if !self.run_on_start {
-            // config_file_default();
+            config_file_default();
             self.run_on_start = true;
         };
 

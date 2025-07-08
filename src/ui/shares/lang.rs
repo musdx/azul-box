@@ -1,3 +1,5 @@
+use crate::ui::shares::config;
+use crate::ui::shares::config::get_config_file_path;
 use eframe::egui::{self, Color32, Ui};
 
 pub struct LangThing {}
@@ -100,6 +102,18 @@ impl LangThing {
                         } else {
                             if ui.button(*lang).clicked() {
                                 lang_in = code.to_string();
+                                let path_config = get_config_file_path();
+                                println!("{path_config:?}");
+                                match config::modifier_config(&path_config, |cfg| {
+                                    cfg.universal.language = lang_in.clone()
+                                }) {
+                                    Ok(_) => {
+                                        println!("Saved languages")
+                                    }
+                                    Err(e) => {
+                                        eprintln!("Fail saved languages {e}")
+                                    }
+                                }
                                 ui.close_menu();
                             }
                         }
