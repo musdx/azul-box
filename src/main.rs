@@ -40,6 +40,7 @@ struct MainApp {
     ffmpeg: bool,
     pin: bool,
     azul_yt: PathBuf,
+    check_result: i8,
 }
 
 impl Default for MainApp {
@@ -55,10 +56,14 @@ impl Default for MainApp {
             ffmpeg: false,
             pin: false,
             azul_yt: PathBuf::new(),
+            check_result: 0,
         }
     }
 }
 
+use crate::ui::shares::version_check;
+use eframe::egui::Align2;
+use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 impl eframe::App for MainApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut style = (*ctx.style()).clone();
@@ -68,6 +73,7 @@ impl eframe::App for MainApp {
                 self.azul_yt = bin_path;
             }
             config_file_default();
+            self.check_result = version_check::version_check();
             self.run_on_start = true;
         };
 
@@ -93,6 +99,45 @@ impl eframe::App for MainApp {
                 ui.heading("Azul Box");
                 ui.horizontal_wrapped(|ui| {
                     global_theme_preference_buttons(ui);
+                    let mut toasts = Toasts::new()
+                        .anchor(Align2::RIGHT_BOTTOM, (-10.0, -10.0)) // 10 units from the bottom right corner
+                        .direction(egui::Direction::BottomUp);
+                    if ui.button("Check For new version").clicked() {
+                        if self.check_result > 0 {
+                            println!("{}", self.check_result);
+                            toasts.add(Toast {
+                                text:
+                                    "Your version is higher than github release. It must feel nice!"
+                                        .into(),
+                                kind: ToastKind::Success,
+                                options: ToastOptions::default()
+                                    .duration_in_seconds(10.0)
+                                    .show_progress(true),
+                                ..Default::default()
+                            });
+                        } else if self.check_result == 0 {
+                            println!("{}", self.check_result);
+                            toasts.add(Toast {
+                                text: "You are on the lastest release".into(),
+                                kind: ToastKind::Success,
+                                options: ToastOptions::default()
+                                    .duration_in_seconds(10.0)
+                                    .show_progress(true),
+                                ..Default::default()
+                            });
+                        } else {
+                            println!("{}", self.check_result);
+                            toasts.add(Toast {
+                                text: "Your version is out of date".into(),
+                                kind: ToastKind::Warning,
+                                options: ToastOptions::default()
+                                    .duration_in_seconds(10.0)
+                                    .show_progress(true),
+                                ..Default::default()
+                            });
+                        }
+                    }
+                    toasts.show(ctx);
                 });
             });
         });
