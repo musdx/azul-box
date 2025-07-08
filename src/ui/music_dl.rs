@@ -24,25 +24,37 @@ pub struct MusicDownload {
     pub sim_rate: i8,
     pub musicbrainz: bool,
     pub lrclib: bool,
+    pub config_path: PathBuf,
 }
+
+use crate::ui::shares::config;
 
 impl Default for MusicDownload {
     fn default() -> Self {
         let default_directory = dirs::audio_dir()
             .map(|path| path.to_string_lossy().into_owned())
             .unwrap_or_else(|| String::from(""));
+        let path = config::get_config_file_path();
+        let configs = match config::load_config(&path) {
+            Ok(config) => config,
+            Err(e) => {
+                println!("music_dl: Fail to read config {e}");
+                config::Config::default()
+            }
+        };
         Self {
             link: String::new(),
             out_directory: default_directory,
             status: Arc::new(AtomicI8::new(0)), // 0 = nothing / 1 = pending / 2 = Done / 3 = Fail
-            format: 1,
-            lyrics: true,
-            frag: 1,
-            sub_lang: "en".to_string(),
-            auto_lyric: false,
-            sim_rate: 90,
-            musicbrainz: false,
-            lrclib: false,
+            format: configs.music_dl.format,
+            lyrics: configs.music_dl.lyrics,
+            frag: configs.music_dl.fragments,
+            sub_lang: configs.universal.language,
+            auto_lyric: configs.music_dl.auto_gen_sub,
+            sim_rate: configs.music_dl.threshold,
+            musicbrainz: configs.music_dl.musicbrainz,
+            lrclib: configs.music_dl.liblrc,
+            config_path: path,
         }
     }
 }
@@ -55,12 +67,35 @@ impl MusicDownload {
         ui.menu_button("Musicbrainz", |ui| {
             ui.horizontal(|ui| {
                 ui.label("On/Off: ");
-                ui.checkbox(&mut self.musicbrainz, "");
+                let check = ui.checkbox(&mut self.musicbrainz, "");
+                if check.changed() {
+                    match config::modifier_config(&self.config_path, |cfg| {
+                        cfg.music_dl.musicbrainz = self.musicbrainz
+                    }) {
+                        Ok(_) => {
+                            println!("music_dl: musicbrainz changed")
+                        }
+                        Err(e) => {
+                            println!("music_dl: Fail musicbrainz {e}")
+                        }
+                    }
+                }
             });
-            ui.add(
-                egui::widgets::Slider::new(&mut self.sim_rate, 0..=100)
-                    .text("Similarity threshold"),
-            );
+            let slider = egui::widgets::Slider::new(&mut self.sim_rate, 0..=100)
+                .text("Similarity threshold");
+            let response = ui.add(slider);
+            if response.changed() {
+                match config::modifier_config(&self.config_path, |cfg| {
+                    cfg.music_dl.threshold = self.sim_rate
+                }) {
+                    Ok(_) => {
+                        println!("music_dl: Changed threshold")
+                    }
+                    Err(e) => {
+                        println!("music_dl: Fail change threshold {e}")
+                    }
+                }
+            }
         });
     }
     fn format_button(&mut self, ui: &mut egui::Ui, name: &str, numbername: i8) {
@@ -77,6 +112,16 @@ impl MusicDownload {
         } else {
             if ui.button(name).clicked() {
                 self.format = numbername;
+                match config::modifier_config(&self.config_path, |cfg| {
+                    cfg.music_dl.format = self.format
+                }) {
+                    Ok(_) => {
+                        println!("music_dl: Changed format")
+                    }
+                    Err(e) => {
+                        println!("music_dl: Fail change format {e}")
+                    }
+                }
                 ui.close_menu();
             };
         }
@@ -90,10 +135,30 @@ impl MusicDownload {
                 .clicked()
             {
                 self.auto_lyric = false;
+                match config::modifier_config(&self.config_path, |cfg| {
+                    cfg.music_dl.auto_gen_sub = self.auto_lyric
+                }) {
+                    Ok(_) => {
+                        println!("music_dl: Changed auto lyric")
+                    }
+                    Err(e) => {
+                        println!("music_dl: Fail change auto lyric {e}")
+                    }
+                }
             }
         } else {
             if ui.button("Auto generated").clicked() {
                 self.auto_lyric = true;
+                match config::modifier_config(&self.config_path, |cfg| {
+                    cfg.music_dl.auto_gen_sub = self.auto_lyric
+                }) {
+                    Ok(_) => {
+                        println!("music_dl: Changed auto lyric")
+                    }
+                    Err(e) => {
+                        println!("music_dl: Fail change auto lyric {e}")
+                    }
+                }
             }
         }
     }
@@ -115,24 +180,73 @@ impl MusicDownload {
                     if self.lyrics && self.format != 5 {
                         ui.horizontal(|ui| {
                             ui.label("On/Off: ");
-                            ui.checkbox(&mut self.lyrics, "");
+                            let check = ui.checkbox(&mut self.lyrics, "");
+                            if check.changed() {
+                                match config::modifier_config(&self.config_path, |cfg| {
+                                    cfg.music_dl.lyrics = self.lyrics
+                                }) {
+                                    Ok(_) => {
+                                        println!("music_dl: Changed lyric")
+                                    }
+                                    Err(e) => {
+                                        println!("music_dl: Fail change lyric {e}")
+                                    }
+                                }
+                            }
                         });
                         // self.lang_choice(ui);
                         let lang_in = self.sub_lang.clone();
                         self.sub_lang = LangThing::lang_chooser(ui, lang_in);
                         self.auto_on(ui);
                         ui.separator();
-                        ui.checkbox(&mut self.lrclib, "Liblrc lyrics");
+                        let check = ui.checkbox(&mut self.lrclib, "Liblrc lyrics");
+                        if check.changed() {
+                            match config::modifier_config(&self.config_path, |cfg| {
+                                cfg.music_dl.liblrc = self.lrclib
+                            }) {
+                                Ok(_) => {
+                                    println!("music_dl: Changed lrclib")
+                                }
+                                Err(e) => {
+                                    println!("music_dl: Fail change lrclib {e}")
+                                }
+                            }
+                        }
                     } else if self.format != 5 {
                         ui.horizontal(|ui| {
                             ui.label("On/Off: ");
-                            ui.checkbox(&mut self.lyrics, "");
+                            let check = ui.checkbox(&mut self.lyrics, "");
+                            if check.changed() {
+                                match config::modifier_config(&self.config_path, |cfg| {
+                                    cfg.music_dl.lyrics = self.lyrics
+                                }) {
+                                    Ok(_) => {
+                                        println!("music_dl: Changed lyric")
+                                    }
+                                    Err(e) => {
+                                        println!("music_dl: Fail change lyric {e}")
+                                    }
+                                }
+                            }
                         });
                     }
                 });
                 self.music_brainz_button(ui);
 
-                ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
+                let check =
+                    ui.add(egui::widgets::Slider::new(&mut self.frag, 1..=10).text("Fragments"));
+                if check.changed() {
+                    match config::modifier_config(&self.config_path, |cfg| {
+                        cfg.music_dl.fragments = self.frag
+                    }) {
+                        Ok(_) => {
+                            println!("music_dl: Changed fragments")
+                        }
+                        Err(e) => {
+                            println!("music_dl: Fail change fragments {e}")
+                        }
+                    }
+                }
                 if ui.button("Close").clicked() {
                     ui.close_menu();
                 }

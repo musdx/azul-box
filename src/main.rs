@@ -1,9 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod ui;
+
 use std::path::PathBuf;
 use ui::shares::yt_dlp_bin;
-// use crate::ui::shares::config::config_file;
+use crate::ui::shares::config::config_file_default;
 use eframe::egui::{self, IconData, RichText, global_theme_preference_buttons};
 
 #[tokio::main]
@@ -21,20 +22,19 @@ async fn main() -> eframe::Result {
     eframe::run_native(
         "azul_box",
         options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::<MyApp>::default())
+        Box::new(|_cc| {
+            // egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::<MainApp>::default())
         }),
     )
 }
 
-struct MyApp {
+struct MainApp {
     music_download: ui::music_dl::MusicDownload,
     video_download: ui::video_dl::VideoDownload,
     pinterest_download: ui::pinterest::PinterstDownload,
     image_convert: ui::img_convert::ImgConvert,
     video_convert: ui::video_convert::VideoConvert,
-    colors: ui::colors::Colors,
     run_on_start: bool,
     yt: bool,
     ffmpeg: bool,
@@ -42,7 +42,7 @@ struct MyApp {
     azul_yt: PathBuf,
 }
 
-impl Default for MyApp {
+impl Default for MainApp {
     fn default() -> Self {
         Self {
             music_download: ui::music_dl::MusicDownload::default(),
@@ -50,7 +50,6 @@ impl Default for MyApp {
             pinterest_download: ui::pinterest::PinterstDownload::default(),
             image_convert: ui::img_convert::ImgConvert::default(),
             video_convert: ui::video_convert::VideoConvert::default(),
-            colors: ui::colors::Colors::default(),
             run_on_start: false,
             yt: true,
             ffmpeg: false,
@@ -60,7 +59,7 @@ impl Default for MyApp {
     }
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for MainApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut style = (*ctx.style()).clone();
         if !self.run_on_start {
@@ -68,6 +67,7 @@ impl eframe::App for MyApp {
             if let Some(bin_path) = yt_dlp_bin::ytdlp_cache() {
                 self.azul_yt = bin_path;
             }
+            config_file_default();
             self.run_on_start = true;
         };
 
@@ -151,13 +151,5 @@ impl eframe::App for MyApp {
                     self.video_convert.ui(ui);
                 });
         }
-
-        //Color
-        egui::Window::new("Colors picker")
-            .default_open(false)
-            .resizable(false)
-            .show(ctx, |ui| {
-                self.colors.ui(ui);
-            });
     }
 }

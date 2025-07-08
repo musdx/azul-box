@@ -1,3 +1,5 @@
+use crate::ui::shares::config;
+use crate::ui::shares::config::get_config_file_path;
 use eframe::egui::{self, Color32, Ui};
 
 pub struct LangThing {}
@@ -26,7 +28,22 @@ impl LangThing {
             "ro", // Romanian
             "tr", // Turkish
             "vi", // Vietnamese
-            "ko", //Korean
+            "ko", // Korean
+            "el", // Greek
+            "he", // Hebrew
+            "th", // Thai
+            "id", // Indonesian
+            "ms", // Malay
+            "hi", // Hindi
+            "uk", // Ukrainian
+            "bg", // Bulgarian
+            "hr", // Croatian
+            "sk", // Slovak
+            "sl", // Slovenian
+            "sr", // Serbian
+            "lt", // Lithuanian
+            "lv", // Latvian
+            "et", // Estonian
         ];
         let languages: Vec<&str> = vec![
             "English",
@@ -51,26 +68,57 @@ impl LangThing {
             "Turkish",
             "Vietnamese",
             "Korean",
+            "Greek",
+            "Hebrew",
+            "Thai",
+            "Indonesian",
+            "Malay",
+            "Hindi",
+            "Ukrainian",
+            "Bulgarian",
+            "Croatian",
+            "Slovak",
+            "Slovenian",
+            "Serbian",
+            "Lithuanian",
+            "Latvian",
+            "Estonian",
         ];
         ui.menu_button("Languages", |ui| {
-            for (lang, code) in languages.iter().zip(language_codes.iter()) {
-                if lang_in == code.to_string() {
-                    if ui
-                        .add(egui::Button::new(
-                            egui::RichText::new(*lang).color(Color32::LIGHT_BLUE),
-                        ))
-                        .clicked()
-                    {
-                        lang_in = code.to_string();
-                        ui.close_menu();
-                    };
-                } else {
-                    if ui.button(*lang).clicked() {
-                        lang_in = code.to_string();
-                        ui.close_menu();
+            egui::ScrollArea::vertical()
+                .max_height(350.0)
+                .show(ui, |ui| {
+                    for (lang, code) in languages.iter().zip(language_codes.iter()) {
+                        if lang_in == code.to_string() {
+                            if ui
+                                .add(egui::Button::new(
+                                    egui::RichText::new(*lang).color(Color32::LIGHT_BLUE),
+                                ))
+                                .clicked()
+                            {
+                                lang_in = code.to_string();
+                                ui.close_menu();
+                            };
+                        } else {
+                            if ui.button(*lang).clicked() {
+                                lang_in = code.to_string();
+                                let path_config = get_config_file_path();
+                                println!("{path_config:?}");
+                                match config::modifier_config(&path_config, |cfg| {
+                                    cfg.universal.language = lang_in.clone()
+                                }) {
+                                    Ok(_) => {
+                                        println!("Saved languages")
+                                    }
+                                    Err(e) => {
+                                        eprintln!("Fail saved languages {e}")
+                                    }
+                                }
+                                ui.close_menu();
+                            }
+                        }
                     }
-                }
-            }
+                });
         });
         lang_in
     }

@@ -62,8 +62,10 @@ pub fn lrclib_fetch(opt: &Path, lang: &str) {
 
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
-    plainLyrics: String,
-    syncedLyrics: String,
+    #[serde(rename = "plainLyrics")]
+    plain_lyrics: String,
+    #[serde(rename = "syncedLyrics")]
+    synced_lyrics: String,
 }
 
 fn fetch(query: &str) -> Result<String, Box<dyn Error>> {
@@ -76,10 +78,10 @@ fn fetch(query: &str) -> Result<String, Box<dyn Error>> {
             let json = a.body_mut().read_json::<ApiResponse>();
             if json.is_ok() {
                 let lyr = json.ok().unwrap();
-                if !lyr.syncedLyrics.is_empty() {
-                    retu = lyr.syncedLyrics;
-                } else if !lyr.plainLyrics.is_empty() {
-                    retu = lyr.plainLyrics;
+                if !lyr.synced_lyrics.is_empty() {
+                    retu = lyr.synced_lyrics;
+                } else if !lyr.plain_lyrics.is_empty() {
+                    retu = lyr.plain_lyrics;
                 } else {
                 }
             }
