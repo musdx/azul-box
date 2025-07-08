@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[allow(dead_code)]
 pub fn config_file_default() {
     let azul_conf = "AzulBox";
     let azul_conf_file = "config.toml";
@@ -38,13 +37,11 @@ fn save_config(config: &Config, path: &Path) -> Result<(), Box<dyn std::error::E
     fs::write(path, toml_string)?;
     Ok(())
 }
-#[allow(dead_code)]
 pub fn load_config(path: &Path) -> Result<Config, Box<dyn std::error::Error>> {
     let toml_string = fs::read_to_string(path)?;
     let config: Config = toml::from_str(&toml_string)?;
     Ok(config)
 }
-#[allow(dead_code)]
 pub fn modifier_config<F>(path: &Path, modify_fn: F) -> Result<(), Box<dyn std::error::Error>>
 where
     F: FnOnce(&mut Config),
