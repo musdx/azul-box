@@ -68,7 +68,7 @@ pub struct Universal {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VideoDl {
-    pub format: String,
+    pub format: i8,
     pub subtitle: bool,
     pub auto_gen_sub: bool,
     pub fragments: i8,
@@ -90,7 +90,7 @@ impl Default for Config {
                 language: "en".to_string(),
             },
             video_dl: VideoDl {
-                format: "mkv".to_string(),
+                format: 1,
                 subtitle: true,
                 auto_gen_sub: false,
                 fragments: 1,
