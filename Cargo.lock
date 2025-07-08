@@ -471,6 +471,7 @@ version = "0.1.71"
 dependencies = [
  "dirs",
  "eframe",
+ "egui-toast",
  "lofty",
  "native-dialog",
  "notify-rust",
@@ -1159,6 +1160,15 @@ dependencies = [
  "log",
  "nohash-hasher",
  "profiling",
+]
+
+[[package]]
+name = "egui-toast"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "366a31eb8c905835c85a36baff26d7a003a9fd6631a04b1f15f42d9cb20d11ad"
+dependencies = [
+ "egui",
 ]
 
 [[package]]
